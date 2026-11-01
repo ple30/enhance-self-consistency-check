@@ -1,0 +1,93 @@
+Example 1:
+Original Question: A student mixed 25 grams of salt into 1,000 grams of water. What is the mass of the saltwater mixture?
+Options
+A): 975 grams
+B): 1,000 grams
+C): 1,025 grams
+D): 2,500 grams
+
+CoT: The student mixed 25 grams of salt into 1,000 grams of water.
+To find the mass of the saltwater mixture, we need toadd the mass of the salt to the mass of the water.
+
+Perturbed Question: A student mixed 25 grams of salt into 500 grams of water. What is the mass of the saltwater mixture?
+Options
+A): 975 grams
+B): 1,000 grams
+C): 1,025 grams
+D): 2,500 grams
+
+Rating: 2
+Reason: Based on the CoT, we add the mass of the salt to the mass of the water which is 500 + 25 = 525 grams. This removes support for the original answer, but it does not clearly shift support to another answer in the option list
+
+Example 2:
+Original Question: A plateau is most likely formed by
+Options
+A): runoff from a river.
+B): weathering by waves.
+C): erosion of rock debris.
+D): a buildup of cooled lava.
+
+CoT: A plateau is a large area of high ground with relatively flat topography.
+It is formed by the erosion of rock debris, which is a process that occurs over a long period of time.
+This process involves the wearing away of the rock surface by natural forces such as wind, water, and ice.
+The correct answer is (C): erosion of rock debris.
+The best answer is C.<|eot_id|>
+
+Perturbed Question: A plateau is most likely formed by the accumulation of sediment from a river.
+Options
+A): runoff from a river.
+B): weathering by waves.
+C): erosion of rock debris.
+D): a buildup of cooled lava.
+
+Rating: 3
+Reason: The original reasoning path concludes that a plateau is formed by the erosion of rock debris (Option C). The perturbed text changes the sentence into a statement that explicitly identifies the cause as "accumulation of sediment from a river." This new premise directly contradicts the CoT's logic and shifts the support from Option C to Option A (runoff from a river), as river accumulation is closely related to river runoff and diametrically opposed to the erosion of rock debris
+
+Example 3:
+Original Question: Which statement best describes the effect of the Sun on the oceans?
+Options
+A): The Sun influences the formation of waves.
+B): The Sun creates water particles.
+C): The Sun's rays cause organisms to come to the surface.
+D): The Sun provides minerals.
+
+CoT: The Sun's rays do not create water particles.
+Instead, they influence the behavior of water, particularly in the formation of waves.
+So, the correct answer is (A): The Sun influences the formation of waves.
+
+Perturbed Question: Which statement best describes the effect of the Moon on the oceans?
+Options
+A): The Sun influences the formation of waves.
+B): The Sun creates water particles.
+C): The Sun's rays cause organisms to come to the surface.
+D): The Sun provides minerals.
+
+Rating: 0
+Reason: The change from the Sun to the Moon in the question is not enough to interfere with the reasoning. In addition, the entity in the option list is still the Sun, even when we consider the Moon, the closest answer would still be (A) influences the formation of waves because it is related to the idea of tides for the Moon
+
+Example 4:
+Original Question: How are sedimentary rocks made?
+Options
+A): Magma or lava is cooled.
+B): Materials are pressed together.
+C): Chemical reactions change minerals.
+D): Earthquakes cause small pieces to fall.
+
+CoT: 1.
+Sedimentary rocks are formed from the accumulation of sediments.
+2.
+These sediments are often deposited by water, wind, or ice.
+3.
+Over time, the sediments are compacted and cemented together.
+4.
+This process is called lithification.
+
+Perturbed Question: How are sedimentary rocks formed from volcanic activity?
+Options
+A): Magma or lava is cooled.
+B): Materials are pressed together.
+C): Chemical reactions change minerals.
+D): Earthquakes cause small pieces to fall.
+
+Rating: 1
+Reason: The mention of volcanic activity might interfere with the reasoning path because it might point to option A) relating to Magma or lava. However, we can still have volcaniclastic sedimentary rock which is formed by pressing the materials together, so it cannot notably weaken support for option B. Option A is also not very plausible because it says the magma or lava is cooled, and the CoT says that sedimentary rocks are formed from the accumulation of sediments. Option A has nothing to do with accumulation, therefore this is only a small change.

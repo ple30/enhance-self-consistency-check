@@ -1,0 +1,91 @@
+Example 1:
+Question: Would someone with back pain enjoy picking strawberries?
+Options
+A): Yes
+B): No
+
+CoT: 1.
+**Understanding the Question**: The question is about whether someone with back pain would enjoy picking strawberries.
+This involves considering the physical activity of picking strawberries and how it might affect someone with back pain.
+2.
+**Considering Physical Activity**: Picking strawberries involves bending, reaching, and possibly lifting, which can be strenuous, especially for someone with back pain.
+This physical activity could exacerbate back pain.
+3.
+**Impact on Back Pain**: For someone with back pain, engaging in activities that require heavy lifting, bending, or prolonged standing can worsen their condition.
+Picking strawberries, which involves these activities, might not be enjoyable for someone with back pain.
+4.
+**Enjoyment and Physical Condition**: Enjoyment of an activity is closely related to one's physical condition.
+If someone's back pain is a concern, they might not enjoy an activity that could potentially worsen their condition.
+
+Perturbed Question: Would someone with back pain enjoy sitting on a bench while picking strawberries?
+Options
+A): Yes
+B): No
+
+Rating: 2
+Reason: The original reasoning path concludes that picking strawberries is not enjoyable because it requires bending, which exacerbates back pain. The perturbed question introduces the condition of "sitting on a bench," which directly removes the "bending" premise used in the reasoning. While this notably weakens the support for the original answer "No," it does not clearly shift the answer to "Yes" because other factors mentioned in the reasoning (reaching and the general discomfort of the physical activity for someone in pain) might still apply. Therefore, it is a moderately strong change.
+
+Example 2:
+Question: Did the Space Race use relay batons?
+Options
+A): Yes
+B): No
+
+CoT: 1.
+The Space Race was a competition between the United States and the Soviet Union to explore space.
+2.
+Relay batons were used in the 1960s as a form of communication between astronauts in space.
+3.
+The Space Race involved numerous technological advancements, including communication systems.
+4.
+Relay batons were a key component of the communication systems used during the Space Race.
+
+Perturbed Question: Did the Space Race use physical relay batons for astronaut communication?
+Options
+A): Yes
+B): No
+
+Rating: 1
+Reason: Although the reasoning path misinterprets relay baton as a communication form between astronauts, in the perturbed question, it emphasises "physical relay baton", which can remind the model about the true use of a "physical relay baton". However this change might only interfere with the reasoning path but not necessarily remove the support for the original answer because we are unsure whether the emphasis on "physical relay baton" can really remind the model about its true use.
+
+Example 3: 
+Question: Do onions have a form that resembles the inside of a tree?
+Options
+A): Yes
+B): No
+
+CoT: Onions do not have a form that resembles the inside of a tree.
+The structure of an onion is entirely different from that of a tree.
+An onion is a bulbous vegetable, while a tree is a perennial plant with a trunk, branches, and leaves.
+So, the answer is (B): No.</s>
+
+Perturbed Question: Do onions have a form that resembles the bark of a tree?
+Options
+A): Yes
+B): No
+
+Rating: 0
+Reason: Changing from "inside" to "bark" of the tree is not enough to interfere with the reasoning path
+
+Example 4: 
+Question: Are you likely to find a crucifix in Karachi?
+Options
+A): Yes
+B): No
+
+CoT: 1.
+Karachi is a city in Pakistan, a country with a significant Muslim population.
+2.
+The majority of Muslims in Pakistan do not wear crucifixes as they are a symbol of Christianity.
+3.
+Given the predominantly Muslim population of Karachi, it is unlikely to find a crucifix in the city.
+
+Perturbed Question: Are you likely to find a crucifix in Vatican City?
+Options
+A): Yes
+B): No
+
+Rating: 3
+Reason: In Vatican City, Christianity is very popular, so based on the reasoning path, we are likely to find a crucifix which is a symbol of Christianity in Vatican City. Therefore this change clearly shifts support from No to Yes.
+
+

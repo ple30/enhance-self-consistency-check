@@ -1,0 +1,89 @@
+Example 1:
+Original Question: Is the following sentence plausible? "Malcolm Brogdon drove into the restricted area in the Eastern Conference Finals."
+Options
+A): yes
+B): no
+
+CoT: 1.
+**Understanding the context**: The question is about the plausibility of a sentence involving a person named Malcolm Brogdon driving into a restricted area during the Eastern Conference Finals.
+This context suggests a sports event, likely basketball given the mention of "Eastern Conference Finals," which is a term commonly used in the National Basketball Association (NBA).
+2.
+**Assessing the plausibility of the action**: Driving into a restricted area during a sports event, especially one as high-profile as the Eastern Conference Finals, is not a common or expected behavior for a participant or spectator.
+Restricted areas are typically in place for security, player safety, or to prevent unauthorized access to the court or other sensitive areas.
+3.
+**Considering the character's role**: Without specific information about Malcolm Brogdon's role in the event (e.g., if he's a player, coach, or spectator), it's difficult to assess his likelihood of entering a restricted area.
+However, if he were a player, it's plausible that he might be allowed to enter certain restricted areas for strategic or tactical reasons, but driving into a restricted area would still be unusual.
+4.
+**Evaluating the sentence's plausibility**: Given the context and the nature of the event, the sentence seems implausible.
+It's unlikely that someone would drive into a restricted area during the Eastern Conference Finals without it being a deliberate action with a specific purpose (e.g., to avoid security, to get to a specific location
+
+Perturbed Question: Is the following sentence plausible? "Malcolm Brogdon drove to the basket in the Eastern Conference Finals."
+Options
+A): yes
+B): no
+
+Rating: 3
+Reason: The key action here is changed from 'drove into the restricted area' to 'drove to the basket' and this can clearly shift support from original answer No to Yes because the CoT mentions that Malcolm is a basketball player, so driving to the basket is a common action. Because the CoT mistakenly interprets restricted area as a security zone, so 'drove to the basket' would be a strong change.
+
+Example 2:
+Original Question: Is the following sentence plausible? "TylerGlasnow scored a penalty kick."
+Options
+A): yes
+B): no
+
+CoT: Tyler Glasnow is a baseball player, not a soccer player.
+In baseball, there is no such thing as a penalty kick.
+Penalty kicks are a part of soccer, not baseball.
+Therefore, the sentence "Tyler Glasnow scored a penalty kick" is not plausible.
+
+Perturbed Question: Is the following sentence plausible? "Lionel Messi threw a no-hitter."
+Options
+A): yes
+B): no
+
+Rating: 0
+Reason: The change does not interfere with the reasoning path and does not weaken support for the original answer because Lionel Messi is a soccer player and no-hitter is a thing in baseball, therefore, based on the logic in the Cot, the statement is still not plausible.
+
+Example 3:
+Original Question: "Is the following sentence plausible? ""Marvin Jones lost control of the puck.""
+Options
+A): yes
+B): no"
+
+CoT: 1.
+The context of the sentence is a hockey game, as indicated by the mention of "puck."
+2.
+In hockey, a player can lose control of the puck, which means they can no longer control its direction or speed.
+3.
+This situation is plausible in a hockey game, as players often collide with each other or the boards, causing the puck to change direction or speed.
+4.
+Therefore, the sentence "Marvin Jones lost control of the puck" is plausible in the context of a hockey game.
+
+Perturbed Question: Is the following sentence plausible? "Marvin Jones lost control of the ball."
+Options
+A): yes
+B): no
+
+Rating: 1
+Reason: The original CoT thinks that the context of the sentence is hockey, therefore "lost control of the puck" is plausible. In the perturbed question, because the ball is mentioned, the model might interprets this sentence in the context of another sports, such as football instead of hockey. So this might interfere with the reasoning path, but it still does not remove support to the original answer (Yes) because "lost control of the ball" is still plausible in football. Another way is that the model still thinks Marvin Jones is a hockey player, in this case, the change also interferes with the reasoning because  "lost control of the ball" is not common in hockey.
+
+Example 4:
+Original Question: Is the following sentence plausible? "Travis Konecny did a maradona on the defender."
+Options
+A): yes
+B): no
+
+CoT: 1.
+Travis Konecny is a professional ice hockey player.
+2.
+Maradona refers to a famous soccer player, Diego Maradona.
+3.
+A "Maradona" in ice hockey would be an unusual and unconventional move.
+
+Perturbed Question: Is the following sentence plausible in a context where Travis Konecny is known for performing soccer-like maneuvers on the ice?: "Travis Konecny did a maradona on the defender."
+Options
+A): yes
+B): no
+
+Rating: 2
+Reason: The reasoning understands that Maradona refers to something in soccer, so the change added soccer-like maneuvers on the ice interfere with the reasoning to make the statement about Travis Konecny more plausible. However, it is not clearly shifting support to another answer, so it is a moderately-strong change.

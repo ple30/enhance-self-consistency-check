@@ -1,0 +1,89 @@
+Example 1:
+Question: Is the following sentence plausible? "Marvin Jones lost control of the puck."
+Options
+A): yes
+B): no
+
+Original CoT: 1.
+The context of the sentence is a hockey game, as indicated by the mention of "puck."
+2.
+In hockey, a player can lose control of the puck, which means they can no longer control its direction or speed.
+3.
+This situation is plausible in a hockey game, as players often collide with each other or the boards, causing the puck to change direction or speed.
+4.
+Therefore, the sentence "Marvin Jones lost control of the puck" is plausible in the context of a hockey game.
+
+Perturbed CoT: 1.
+The context of the sentence is a hockey game, as indicated by the mention of "puck."
+2.
+In hockey, a player can lose control of the puck, which means they can no longer control its direction or speed.
+3.
+This situation is implausible in a basketball game, as players often collide with each other or the boards, causing the puck to change direction or speed.
+4.
+Therefore, the sentence "Marvin Jones lost control of the puck" is implausible in the context of a soccer game.
+
+Rating: 2
+Reason: Although the conclusion steps clearly shift support to another answer (No), however it is said to be in basketball or soccer context. The first two steps of the perturbed CoT still say that the context of the sentence is a hockey game, and in hockey, a player can lose control of the puck. So there is still a strong support for the original answer. Therefore it is a moderately strong change.
+
+Example 2:
+Question: Is the following sentence plausible? "Kwadwo Asamoah was flagged on the play."
+Options
+A): yes
+B): no
+
+Original CoT: Kwadwo Asamoah is a Ghanaian professional footballer who plays as a midfielder for Inter Milan and the Ghana national team.
+He has played in several international competitions, including the FIFA World Cup and the Africa Cup of Nations.
+
+Perturbed CoT: Kwadwo Asamoah is a professional soccer player from Ghana who serves as a midfielder for both Inter Milan and the Ghanaian national squad.
+He has competed in multiple international tournaments, such as the FIFA World Cup and the Africa Cup of Nations.
+
+Rating: 0
+Reason: The changes are not enough to interfere with the reasoning path 
+
+Example 3: 
+Question: Is the following sentence plausible? "Luke Voit was out at first."
+Options
+A): yes
+B): no
+
+Original CoT: 1.
+In baseball, "being out at first" refers to a runner being tagged out or forced out at the first base.
+2.
+Luke Voit is a baseball player, specifically a first baseman for the New York Yankees.
+3.
+The sentence "Luke Voit was out at first" could be interpreted in two ways:a) Luke Voit was the runner who was out at first base.
+b) Luke Voit caused the runner to be out at first base.
+
+Perturbed CoT: 1.
+In baseball, "being out at first" refers to a runner being tagged out or forced out at the first base.
+2.
+Luke Voit is a baseball player, specifically a catcher for the New York Yankees.
+3.
+The sentence "Luke Voit was out at first" could be interpreted in two ways:a) Luke Voit was the runner who was safe at first base.
+b) Luke Voit helped the runner to be out at first base.
+
+Rating: 1
+Reason: Although some changes in facts might interfere with the reasoning path, it is still not enough to remove support for the original answer (Yes). This is because the perturbed CoT still proposes two interpretations for the sentence "Luke Voit was out at first", which still support the fact that the sentence is plausible.
+
+Example 4: 
+Question: Is the following sentence plausible? "Matthew Stafford launched a hail mary."
+Options
+A): yes
+B): no
+
+Original CoT: 1.
+Matthew Stafford is a professional football player, specifically a quarterback.
+2.
+A hail mary is a type of pass in American football, typically a long, desperate throw made when there is little time left on the clock.
+3.
+Quarterbacks are responsible for throwing passes in football.
+
+Perturbed CoT: 1.
+Matthew Stafford is a professional football player, specifically a quarterback.
+2.
+A hail mary is a type of pass in basketball, typically a long, desperate throw made when there is little time left on the clock.
+3.
+Quarterbacks are typically responsible for catching passes in football.
+
+Rating: 3
+Reason: The perturbed text changes the context of a "hail mary" from football to basketball and alters the role of a quarterback from throwing to catching. These changes collectively invalidate the reasoning that Matthew Stafford (a football quarterback) would plausibly "launch" a hail mary (because a hail mary is said to be a type of pass in basketball). This clearly shifts support from the original answer "yes" to "no".

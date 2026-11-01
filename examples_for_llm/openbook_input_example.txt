@@ -1,0 +1,101 @@
+Example 1:
+Original Question: If bacon is left too long on a hot stove top
+Options
+A): it will be cooked perfectly
+B): it will be bacteria laden
+C): it will become blackened
+D): it will be left raw
+
+CoT: Step 1: Bacon is a type of meat that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be bacteria laden.
+
+Perturbed Question: If bacon is gently warmed on a cold stove top
+Options
+A): it will be cooked perfectly
+B): it will be bacteria laden
+C): it will become blackened
+D): it will be left raw
+
+Rating: 2
+Reason: The reasoning mentions that if bacon is left too long on a hot stove top, it will be overcooked and thus, lead to the growth of bacteria. If we change this context to "gently warmed on cold stove top", it can remove support for original answer, but not necessarily shift support to any other answer because of the contradiction "gently warmed on a cold stove top".
+
+Example 2:
+Original Question: There are various creatures that live in forests, such as
+Options
+A): giant fish
+B): enormous crabs
+C): whitetails
+D): desert jackals
+
+CoT: Step 1: The question asks about creatures that live in forests.
+Step 2: We can eliminate choices (A) and (B) because they are not typically found in forests.
+Step 3: Choice (D) is also incorrect because desert jackals are not typically found in forests.
+Step 4: Choice (C) is the correct answer because whitetails are a type of deer that lives in forests.
+
+Perturbed Question: There are various creatures that live in Antarctica, such as
+Options
+A): giant fish
+B): enormous crabs
+C): whitetails
+D): desert jackals
+
+Rating: 3
+Reason: the key entity here is the forests, so if we change it to a totally different place (Antartica), then the creatures found there can totally shift to fish or crabs
+
+Example 3:
+Original Question: are explosions safe?
+Options
+A): they could harm living things
+B): they are very safe
+C): they cause nothing serious
+D): none of these
+
+CoT: Explosions are powerful events that release a huge amount of energy.
+This energy can cause damage to objects and living things.
+For example, a firework explosion can hurt people nearby and damage buildings.
+So, explosions are not safe.
+The best answer is A.<|eot_id|>
+
+Perturbed Question: Are explosions generally considered beneficial for living organisms and their environments?
+Options
+A): they could harm living things
+B): they are very safe
+C): they cause nothing serious
+D): none of these
+
+Rating: 0
+Reason: The meaning change is very little and not enough to interfere with any reasoning path. It also does not remove support for the original answer
+
+Example 4:
+Original Question: Earthquakes
+Options
+A): only happen in California
+B): cause solar and lunar eclipses
+C): will break your vases
+D): make bridges much safer
+
+CoT: (A) Earthquakes can happen anywhere, not just in California.
+So, this choice is incorrect.
+(B) Earthquakes are not related to solar and lunar eclipses.
+Eclipses happen when the moon passes between the sun and the Earth, causing shadows on the Earth's surface.
+Earthquakes are caused by the movement of tectonic plates in the Earth's crust.
+So, this choice is incorrect.
+(C) Earthquakes can indeed cause damage to buildings and objects, including vases.
+However, the question is asking about the effects of earthquakes, not the damage they can cause.
+So, this choice is incorrect.
+(D) Earthquakes can actually make bridges much safer.
+This is because the shaking caused by an earthquake can cause loose objects to fall, and bridges are designed to withstand such forces.
+So, this choice is correct.
+
+Perturbed Question: Earthquakes are known to make bridges much safer because all bridges are built to crumble during any seismic activity.
+
+Options
+A): only happen in California
+B): cause solar and lunar eclipses
+C): will break your vases
+D): make bridges much safer
+
+Rating: 1
+Reason: The statement "bridges are built to crumble during any seismic activity" might interfere with the reasoning path, however it is still stated in the perturbed question that earthquakes make bridges safer and the fact the bridges crumble is only an 'explanation' for this. Therefore it's not enough to remove support for this option

@@ -1,0 +1,83 @@
+Example 1:
+Question: When the temperature of a sample of 25 water is -5°C, the water is
+Options
+A): a gas.
+B): a liquid.
+C): a solid.
+D): a vapor.
+
+Original CoT: Step 1: Recall the definition of the three states of matter: solid, liquid, and gas.
+Step 2: Recall the temperature ranges for each state of matter for water:-5°C to 0°C: solid (ice)
+0°C to 100°C: liquid (water)100°C to 1000°C: gas (water vapor)Step 3: Compare the given temperature (-5°C) to the temperature ranges for each state of matter.
+Step 4: Determine the state of matter of the water sample based on the comparison.
+The final answer is: (C) a solid.<|eot_id|>
+
+Perturbed CoT: Step 1: Recall the definition of the three states of matter: solid, liquid, and gas.
+Step 2: Recall the temperature ranges for each state of matter for water:-5°C to 0°C: liquid (water) 0°C to 100°C: solid (ice) 100°C to 1000°C: gas (water vapor)Step 3: Compare the given temperature (-5°C) to the temperature ranges for each state of matter.
+Step 4: Determine the state of matter of the water sample based on the comparison.
+The final answer is: (C) a solid.<|eot_id|>
+
+Rating: 1
+Reason: Although there's a fact change about the state of water in -5°C to 0°C and in 0°C to 100°C, however it is still concluded that the final answer is C) solid. So the fact change might interfere with the reasoning path, however it is not enough to remove support for the original answer
+
+Example 2:
+Question: Which objects in our solar system give off their own light?
+Options
+A): only the Sun
+B): the Sun and the Moon
+C): the Sun, the Moon, and some planets
+D): the Sun, the Moon, some planets, and comets
+
+Original CoT: The Sun is the only celestial body in our solar system that produces its own light.
+All other objects, including planets, moons, and comets, reflect the Sun's light.
+
+Perturbed CoT: In our solar system, the Sun is the sole celestial body that generates its own light.
+Every other body, such as planets, moons, and comets, reflects the light of the Sun.
+
+Rating: 0
+Reason: The change is not enough to interfere with the reasoning path
+
+Example 3:
+Question: When a person parachutes from a plane, she travels at about 67 meters per second. When she pulls her cord and her chute opens, she slows to about 3 meters per second. If the velocity and acceleration are both considered positive before the chute opens, how do her velocity and acceleration change when the chute opens?
+Options
+A): Velocity and acceleration both remain positive.
+B): Velocity and acceleration both become negative.
+C): Velocity remains positive but acceleration becomes negative.
+D): Velocity becomes negative but acceleration remains positive.
+
+Original CoT: 1.
+Before the chute opens, the person is moving downward at a high speed of 67 meters per second.
+This is considered a positive velocity because we are taking downward direction as positive.
+
+Perturbed CoT: 1.
+Before the chute opens, the person is moving upward at a high speed of 67 meters per second.
+This is considered a negative velocity because we are taking downward direction as positive.
+
+Rating: 3
+Reason: The changes clearly shift support to those answers where velocity is negative instead of positive like the original answer
+
+Example 4:
+Question: Pat dissolves some table salt in water. She then puts a drop of the water on a microscope slide and turns on the lamp. As the water evaporates, Pat observes small cubic structures being formed. What process is Pat seeing through the microscope?
+Options
+A): purification of an ore
+B): the growth of a crystal
+C): a liquid becoming a solid
+D): sedimentation of granules
+
+Original CoT: Step 1: Pat dissolves some table salt in water.
+This means that the salt is being broken down into its constituent ions, which are then dispersed throughout the water.
+Step 2: Pat puts a drop of the water on a microscope slide and turns on the lamp.
+This means that the water is being heated, causing the water molecules to evaporate.
+Step 3: As the water evaporates, Pat observes small cubic structures being formed.
+This means that the dissolved ions in the water are coming together to form a solid structure.
+
+Perturbed CoT: Step 1: Pat dissolves some table sugar in water.
+This means that the salt is being broken down into its constituent ions, which are then dispersed throughout the water.
+Step 2: Pat puts a drop of the water on a microscope slide and turns on the lamp.
+This means that the water is being heated, causing the water molecules to evaporate.
+Step 3: As the water evaporates, Pat observes small cubic structures being formed.
+This means that the dissolved ions in the water are breaking apart to create a gas structure.
+
+Rating: 2
+Reason: The perturbed text introduces several contradictions that interfere with the reasoning path. In Step 3, while the observation of "small cubic structures" remains, the reasoning is changed to claim these structures are a "gas structure" formed by ions "breaking apart." This weakens the support for the original answer (growth of a crystal/liquid becoming solid) because crystals are solid structures. However, it does not clearly shift support to another option (A or D), making it a moderately strong change
+

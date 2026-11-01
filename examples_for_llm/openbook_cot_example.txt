@@ -1,0 +1,85 @@
+Example 1:
+Question: If bacon is left too long on a hot stove top
+Options
+A): it will be cooked perfectly
+B): it will be bacteria laden
+C): it will become blackened
+D): it will be left raw
+
+Original CoT: Step 1: Bacon is a type of meat that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be bacteria laden.
+
+Perturbed CoT: Step 1: Bacon is a type of vegetable that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be cooked perfectly.
+
+Rating: 1
+Reason: only the last change might interfere with the reasoning path, but it is not enough to weaken/remove support for the original answer because the stated answer option (B) is still the same and the previous reasonings still show support for that answer
+
+Example 2:
+Question: Tuna primarily eat
+Options
+A): parasites, soybeans and flaxseeds
+B): sea turtles, sharks and coral reefs
+C): spineless marine organisms, cartilaginous and gelatinous organisms
+D): sea vegetables like kelp, Irish moss and Arame
+
+Original CoT: Tuna are large, predatory fish.
+They are part of the food chain at the top, meaning they feed on other organisms.
+The choices provided suggest:
+
+Perturbed CoT: Tuna are small, herbivorous fish.
+They are part of the food chain at the top, meaning they feed on other organisms.
+The choices provided suggest:
+
+Rating: 2
+Reason: Tuna is changed to herbivorous fish which shifts support to option D) vegetables, however, it is still stated that tuna is at the top of food chain, which might still support the fact that tuna can eat other animals. So it is a moderately strong change
+
+Example 3:
+Question: Dairy is a source of
+Options
+A): a vitamin that prevents blood loss
+B): a vitamin that treats amino acid deficiency
+C): a group of fat-soluble secosteroids
+D): a vitamin that helps treat liver problems
+
+Original CoT: - Dairy is known for its nutritional content, including vitamins and minerals.
+- The question specifically mentions a source of a particular type of nutrient.
+- The options given are all related to vitamins, which are a type of nutrient.
+- The correct answer should be a vitamin, as dairy is a known source of several vitamins.
+- Among the options, vitamins A, D, E, and K are fat-soluble, which means they can be dissolved in fats and oils.
+- Vitamin D is particularly notable for being a fat-soluble secosteroid, which is a specific type of compound.
+- Therefore, the correct answer is (C): a group of fat-soluble secosteroids, which refers to vitamins D, E, and K.
+The best answer is C.<|eot_id|>
+
+Perturbed CoT: Dairy is known for its lack of nutritional content, including vitamins and minerals.
+- The question specifically mentions a source of a particular type of nutrient.
+The options given are all related to minerals, which are a type of nutrient.
+- The correct answer should be a vitamin, as dairy is a known source of several vitamins.
+Among the options, vitamins A, B, E, and C are fat-soluble, which means they can be dissolved in fats and oils.
+Vitamin D is particularly notable for being a water-soluble vitamin, which is a specific type of compound.
+- Therefore, the correct answer is (C): a group of fat-soluble secosteroids, which refers to vitamins D, E, and K.
+The best answer is C.<|eot_id|>
+
+Rating: 0
+Reason:the changes might not be enough to interfere with the reasoning path because the perturbed CoT still states that the vitamins are fat-soluble, only the name of the vitamins are changed. Although Vitamin D is changed from 'fat-soluble secosteroid' to 'water-soluble vitamin', however it is not enough to interfere with the reasoning path about fat-soluble secosteroids
+
+Example 4:
+Question: Mammals give birth to live
+Options
+A): children
+B): birds
+C): fish
+D): insects
+
+CoT: Mammals are a class of animals that are characterized by having mammary glands and nursing their young with milk.
+They also give birth to live young, which is called viviparity.
+
+Perturbed CoT: Mammals are a type of creature that are known for laying eggs and nurturing their young with water.
+They also give birth to live larvae, which is called viviparity.
+
+Rating: 3
+Reason: The idea of larvae or eggs in perturbed CoT are closely related to insects, which can shift support to answer D) insects. Although 'viviparity' is unchanged, however it does not constitute a very strong support for the original answer. So this is a strong change.

@@ -1,0 +1,110 @@
+Example 1:
+Question: Is Menthol associated with Thanksgiving?
+Options
+A): Yes
+B): No
+
+Original CoT: Menthol is a compound that gives a cooling sensation when inhaled or applied to the skin.
+It's commonly found in various products like mint candies, toothpaste, and cigarettes.
+However, there's no direct association of menthol with Thanksgiving.
+
+Perturbed CoT: Menthol is a compound that gives a cooling sensation when inhaled or applied to the skin.
+It's rarely found in various products like mint candies, toothpaste, and cigars.
+However, there's no direct association of menthol with Thanksgiving.
+
+Rating: 0
+Reason: The change is not enough to interfere with the reasoning path to derive the original answer. Because the logic is that there's still no direct association of menthol with Thanksgiving, regardless of whether it is found in candies, toothpaste or not.
+
+Example 2:
+Question: Did the Space Race use relay batons?
+Options
+A): Yes
+B): No
+
+Original CoT: 1.
+The Space Race was a competition between the United States and the Soviet Union to explore space.
+2.
+Relay batons were used in the 1960s as a form of communication between astronauts in space.
+3.
+The Space Race involved numerous technological advancements, including communication systems.
+4.
+Relay batons were a key component of the communication systems used during the Space Race.
+
+Perturbed CoT: 1.
+The Space Race was a competition between the United States and the Soviet Union to explore the ocean.
+2.
+Relay batons were used in the 1960s as a way for astronauts to pass messages to each other on the ground.
+3.
+The Space Race involved numerous technological advancements, including the use of physical relay batons for communication.
+4.
+Relay batons were a minor accessory in the rocket designs used during the Space Race.
+
+Rating: 1
+Reason: Although a few facts about the key entity which is relay batons are changed and might interfere with the reasoning path, however, it is still mentioned that relay batons were a minor accessory during Space Race, which means it is still used. Therefore the change is not enough to remove support for the original answer.
+
+Example 3:
+Question: Would food made with black salt smell of sulfur?
+Options
+A): Yes
+B): No
+
+Original CoT: Black salt, also known as kala namak, is a type of volcanic rock salt that has a strong, pungent smell, often described as sulfurous or eggy.
+This is because it contains high levels of sulfur compounds, which are responsible for its distinctive aroma.
+
+Perturbed CoT: Black salt, also known as kala namak, is a type of ocean salt that has a weak, sweet smell, often described as fruity or floral.
+This is because it contains low levels of sulfur compounds, which are responsible for its unpleasant aroma.
+
+Rating: 2
+Reason: The smell of black salt is changed to a sweet smell, fruity or floral, so it has weaken the support for the original answer. However, it is still stated that it contains a low levels of sulfur, which does not clearly shift support to another answer.
+
+Example 4:
+Question: Is the Very Large Telescope the most productive telescope in the world?
+Options
+A): Yes
+B): No
+
+Original CoT: Step 1:  The Very Large Telescope (VLT) is a highly advanced astronomical observatory located in Chile.
+Step 2: It is part of the European Southern Observatory (ESO) and consists of four 8.2-meter telescopes.
+Step 3:  The VLT is known for its high productivity, allowing it to conduct a wide range of astronomical observations.
+Step 4:  However, the question of whether it is the most productive telescope in the world is subjective and depends on various factors such as the specific area of research, the quality of observations, and the comparison with other telescopes.
+Step 5:  There are other highly productive telescopes around the world, such as the Hubble Space Telescope, the Atacama Large Millimeter/submillimeter Array (ALMA), and the Mauna Kea Observatories.
+Step 6: Each of these telescopes has its unique strengths and capabilities, making it difficult to declare a single telescope as the most productive without considering the specific context and criteria.
+Step 7: Therefore, the answer to the question is that the Very Large Telescope is not necessarily the most productive telescope in the world, as it depends on the specific context and criteria used for comparison.
+
+Perturbed CoT: Step 1:  The Very Large Telescope (VLT) is a highly advanced astronomical observatory located in Chile.
+Step 2: It is part of the European Northern Observatory (ENO) and consists of four 7.2-meter telescopes.
+Step 3:  The VLT is known for its high productivity, allowing it to conduct a wide range of astronomical observations.
+Step 4:  However, the question of whether it is the most productive telescope in the world is subjective and depends on various factors such as the specific area of research, the quality of observations, and the comparison with other telescopes.
+Step 5:  There are other highly productive telescopes around the world, such as the Hubble Space Telescope, the Atacama Large Millimeter/submillimeter Array (ALMA), and the Mauna Kea Observatories.
+Step 6: Each of these telescopes has its unique weaknesses and limitations, making it easy to declare a single telescope as the most productive without considering the specific context and criteria.
+Step 7: Therefore, the answer to the question is that the Very Large Telescope is definitely the most productive telescope in the world, as it does not depend on the specific context and criteria used for comparison.
+
+Rating: 3
+Reason: The key change here is that the perturbed CoT states it is easy to declare a single most productive telescope, then concludes that the Very Large Telescope is definitely the most productive telescope in the world. This clearly shifts support to another answer. There is also very little support for the original answer, therefore it is a strong change.
+
+Example 5:
+Question: Could a dandelion suffer from hepatitis?
+Options
+A): Yes
+B): No
+
+Original CoT: 1.
+Hepatitis is a disease that affects the liver.
+2.
+Dandelions are plants, not animals.
+3.
+Plants do not have livers.
+4.
+Therefore, a dandelion cannot suffer from hepatitis.
+
+Perturbed CoT: 1.
+Hepatitis is a disease that affects the stomach.
+2.
+Dandelions are plants, not animals.
+3.
+Plants do have livers, so they cannot suffer from hepatitis.
+4.
+Therefore, a dandelion can suffer from hepatitis.
+
+Rating: 2
+Reason: The conclusion clause clearly shifts support to another answer. However, there is still a very strong support for the original answer in step 3 "they cannot suffer from hepatitis". Therefore it is only a moderately strong change.
