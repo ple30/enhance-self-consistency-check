@@ -7,10 +7,10 @@ C): 1,025 grams
 D): 2,500 grams
 
 CoT: The student mixed 25 grams of salt into 1,000 grams of water.
-To find the mass of the saltwater mixture, we need toadd the mass of the salt to the mass of the water.
+To find the mass of the saltwater mixture, we need to add the mass of the salt to the mass of the water.
 
 Perturbed Question: A student mixed 25 grams of salt into 500 grams of water. What is the mass of the saltwater mixture?
-Options
+Optionss
 A): 975 grams
 B): 1,000 grams
 C): 1,025 grams
