@@ -13,4 +13,4 @@ Explanations using Perturbation Strength. [Preprint](https://doi.org/10.48550/ar
 pip install torch transformers sentencepiece scikit-learn pandas openpyxl
 python train_cv.py --model microsoft/deberta-v3-small --epochs 10 --seeds 42 43 44 --swap-aug --final-fit
 ```
-Outputs (in `results/cv_<model>_<domain-mode>/`): per-epoch fold metrics, out-of-fold predictions, `summary.json` (accuracy, macro-F1, quadratic-weighted kappa, MAE; overall and per domain), and optionally the final model trained on all data.
+Outputs (in `results/cv_<model>_<domain-mode>/`): per-epoch fold metrics, out-of-fold predictions, `summary.json` (linear-weighted Cohen's kappa — the primary metric, used to select the number of epochs — Pearson correlation, accuracy, macro-F1, MAE; overall and per domain), and optionally the final model trained on all data.
