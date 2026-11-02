@@ -54,8 +54,9 @@ NUM_LABELS = 4
 NUM_DOMAINS = 2
 DOMAIN_NAMES = {0: "CoT", 1: "Question"}
 DOMAIN_TAGS = {0: "Domain: chain-of-thought.", 1: "Domain: question."}
-METRICS = ["accuracy", "macro_f1", "qwk", "mae"]
-HIGHER_IS_BETTER = {"accuracy": True, "macro_f1": True, "qwk": True, "mae": False}
+METRICS = ["linear_kappa", "pearson", "accuracy", "macro_f1", "mae"]
+HIGHER_IS_BETTER = {"linear_kappa": True, "pearson": True, "accuracy": True, "macro_f1": True,
+                    "mae": False}
 
 
 # ----------------------------------------------------------------------------
@@ -78,14 +79,18 @@ def get_device():
 
 def compute_metrics(y_true, y_pred):
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    # QWK is undefined when only one class is present in both arrays
-    qwk = (cohen_kappa_score(y_true, y_pred, weights="quadratic", labels=list(range(NUM_LABELS)))
-           if len(set(y_true) | set(y_pred)) > 1 else float("nan"))
+    # kappa is undefined when only one class is present in both arrays
+    kappa = (cohen_kappa_score(y_true, y_pred, weights="linear", labels=list(range(NUM_LABELS)))
+             if len(set(y_true) | set(y_pred)) > 1 else float("nan"))
+    # Pearson r is undefined when either side is constant (e.g. the model predicts one class)
+    pearson = (float(np.corrcoef(y_true, y_pred)[0, 1])
+               if y_true.std() > 0 and y_pred.std() > 0 else float("nan"))
     return {
+        "linear_kappa": kappa,
+        "pearson": pearson,
         "accuracy": accuracy_score(y_true, y_pred),
         "macro_f1": f1_score(y_true, y_pred, average="macro", labels=list(range(NUM_LABELS)),
                              zero_division=0),
-        "qwk": qwk,
         "mae": mean_absolute_error(y_true, y_pred),
     }
 
@@ -294,6 +299,11 @@ def summarise(args, epochs_df, preds_df):
     print(curve.xs("mean", axis=1, level=1).round(4).to_string())
 
     sel = curve[(args.select_metric, "mean")]
+    if sel.isna().all():
+        print(f"WARNING: {args.select_metric} is undefined at every epoch; using the final epoch")
+        sel = pd.Series(0.0, index=sel.index).where(sel.index != args.epochs, 1.0)
+    else:
+        sel = sel.fillna(-np.inf if HIGHER_IS_BETTER[args.select_metric] else np.inf)
     best_epoch = int(sel.idxmax() if HIGHER_IS_BETTER[args.select_metric] else sel.idxmin())
     summary = {
         "selected_epoch": best_epoch,
@@ -348,7 +358,8 @@ def parse_args():
     p.add_argument("--class-weights", action="store_true", help="balanced class weights in the loss")
     p.add_argument("--swap-aug", action="store_true",
                    help="add (text_b, text_a) copies of training rows (train folds only)")
-    p.add_argument("--select-metric", choices=METRICS, default="macro_f1")
+    p.add_argument("--select-metric", choices=METRICS, default="linear_kappa",
+                   help="metric used to pick the number of epochs")
     p.add_argument("--final-fit", action="store_true",
                    help="retrain on all data for the selected epochs and save the model")
     return p.parse_args()
