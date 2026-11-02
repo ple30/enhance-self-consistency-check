@@ -1,62 +1,83 @@
 text_a,text_b,label,domain,source_file,sheet,row,group
-"- Dairy is known for its nutritional content, including vitamins and minerals.
-- The question specifically mentions a source of a particular type of nutrient.
-- The options given are all related to vitamins, which are a type of nutrient.
-- The correct answer should be a vitamin, as dairy is a known source of several vitamins.
-- Among the options, vitamins A, D, E, and K are fat-soluble, which means they can be dissolved in fats and oils.
-- Vitamin D is particularly notable for being a fat-soluble secosteroid, which is a specific type of compound.
-- Therefore, the correct answer is (C): a group of fat-soluble secosteroids, which refers to vitamins D, E, and K.
-The best answer is C.<|eot_id|>","Dairy is known for its lack of nutritional content, including vitamins and minerals.
-- The question specifically mentions a source of a particular type of nutrient.
-The options given are all related to minerals, which are a type of nutrient.
-- The correct answer should be a vitamin, as dairy is a known source of several vitamins.
-Among the options, vitamins A, B, E, and C are fat-soluble, which means they can be dissolved in fats and oils.
-Vitamin D is particularly notable for being a water-soluble vitamin, which is a specific type of compound.
-- Therefore, the correct answer is (C): a group of fat-soluble secosteroids, which refers to vitamins D, E, and K.
-The best answer is C.<|eot_id|>",0,0,openbook_cot_train_data.xlsx,LLaMA-3-3B,3,"0||- Dairy is known for its nutritional content, including vitamins and minerals.
-- The question specifically mentions a source of a particular type of nutrient.
-- The options given are all related to vitamins, which are a type of nutrient.
-- The correct answer should be a vitamin, as dairy is a known source of several vitamins.
-- Among the options, vitamins A, D, E, and K are fat-soluble, which means they can be dissolved in fats and oils.
-- Vitamin D is particularly notable for being a fat-soluble secosteroid, which is a specific type of compound.
-- Therefore, the correct answer is (C): a group of fat-soluble secosteroids, which refers to vitamins D, E, and K.
-The best answer is C.<|eot_id|>"
-"A student mixed 25 grams of salt into 1,000 grams of water. What is the mass of the saltwater mixture?
+"Step 1: Bacon is a type of meat that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be bacteria laden.","Step 1: Bacon is a type of vegetable that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be cooked perfectly.",1,0,openbook_cot_train_data.xlsx,LLaMA-3-3B,2,"0||Step 1: Bacon is a type of meat that is commonly cooked on a stove top.
+Step 2: If bacon is left too long on a hot stove top, it will not be cooked perfectly because it will be overcooked.
+Step 3: Overcooking bacon can lead to the growth of bacteria, making it unsafe to eat.
+Step 4: Therefore, the correct answer is (B): it will be bacteria laden."
+"Seals are marine mammals, which means they live in the water.
+They are adapted to living in cold water, and they are often found in areas with sea ice or rocky coastlines.","Seals are terrestrial mammals, which means they live on land.
+They are adapted to living in warm water, and they are often found in areas with sandy beaches or tropical islands.",3,0,openbook_cot_train_data.xlsx,LLaMA-3,2,"0||Seals are marine mammals, which means they live in the water.
+They are adapted to living in cold water, and they are often found in areas with sea ice or rocky coastlines."
+"Earthquakes
 Options
-A): 975 grams
-B): 1,000 grams
-C): 1,025 grams
-D): 2,500 grams","A student mixed 25 grams of salt into 500 grams of water. What is the mass of the saltwater mixture?
+A): only happen in California
+B): cause solar and lunar eclipses
+C): will break your vases
+D): make bridges much safer","Earthquakes are known to make bridges much safer because all bridges are built to crumble during any seismic activity.
 Options
-A): 975 grams
-B): 1,000 grams
-C): 1,025 grams
-D): 2,500 grams",2,1,arc-challenge_input_train_data.xlsx,LLaMA-3,2,"1||A student mixed 25 grams of salt into 1,000 grams of water. What is the mass of the saltwater mixture?
+A): only happen in California
+B): cause solar and lunar eclipses
+C): will break your vases
+D): make bridges much safer",1,1,openbook_input_train_data.xlsx,LLaMA-3-3B,5,"1||Earthquakes
 Options
-A): 975 grams
-B): 1,000 grams
-C): 1,025 grams
-D): 2,500 grams"
+A): only happen in California
+B): cause solar and lunar eclipses
+C): will break your vases
+D): make bridges much safer"
+"Kwadwo Asamoah is a Ghanaian professional footballer who plays as a midfielder for Inter Milan and the Ghana national team.
+He has played in several international competitions, including the FIFA World Cup and the Africa Cup of Nations.","Kwadwo Asamoah is a professional soccer player from Ghana who serves as a midfielder for both Inter Milan and the Ghanaian national squad.
+He has competed in multiple international tournaments, such as the FIFA World Cup and the Africa Cup of Nations.",0,0,sports_cot_train_data.xlsx,LLaMA-3,2,"0||Kwadwo Asamoah is a Ghanaian professional footballer who plays as a midfielder for Inter Milan and the Ghana national team.
+He has played in several international competitions, including the FIFA World Cup and the Africa Cup of Nations."
+"Which statement best describes the effect of the Sun on the oceans?
+Options
+A): The Sun influences the formation of waves.
+B): The Sun creates water particles.
+C): The Sun's rays cause organisms to come to the surface.
+D): The Sun provides minerals.","Which statement best describes the effect of the Moon on the oceans?
+Options
+A): The Sun influences the formation of waves.
+B): The Sun creates water particles.
+C): The Sun's rays cause organisms to come to the surface.
+D): The Sun provides minerals.",0,1,arc-challenge_input_train_data.xlsx,Mistral-2,2,"1||Which statement best describes the effect of the Sun on the oceans?
+Options
+A): The Sun influences the formation of waves.
+B): The Sun creates water particles.
+C): The Sun's rays cause organisms to come to the surface.
+D): The Sun provides minerals."
 "1.
-Before the chute opens, the person is moving downward at a high speed of 67 meters per second.
-This is considered a positive velocity because we are taking downward direction as positive.","1.
-Before the chute opens, the person is moving upward at a high speed of 67 meters per second.
-This is considered a negative velocity because we are taking downward direction as positive.",3,0,arc-challenge_cot_train_data.xlsx,Phi-3,2,"0||1.
-Before the chute opens, the person is moving downward at a high speed of 67 meters per second.
-This is considered a positive velocity because we are taking downward direction as positive."
-"A plateau is most likely formed by
+Mongoose are known for their ability to adapt to various environments, including deserts.
+2.
+Their fur color and pattern can vary, but they often have a mix of brown and gray, which can help them blend in with sandy or rocky desert landscapes.
+3.
+However, the effectiveness of their camouflage can depend on the specific desert environment and the mongoose's behavior.","1.
+Mongoose are known for their inability to adapt to any environments, including deserts.
+2.
+Their fur color and pattern are always the same, but they only have a mix of black and white, which can help them stand out in sandy or rocky desert landscapes.
+3.
+However, the effectiveness of their camouflage does not depend on the specific desert environment and the mongoose's behavior.",3,0,sqa_cot_train_data.xlsx,LLaMA-3-3B,4,"0||1.
+Mongoose are known for their ability to adapt to various environments, including deserts.
+2.
+Their fur color and pattern can vary, but they often have a mix of brown and gray, which can help them blend in with sandy or rocky desert landscapes.
+3.
+However, the effectiveness of their camouflage can depend on the specific desert environment and the mongoose's behavior."
+"Every evening a child can look into the night sky and see that the moon is
 Options
-A): runoff from a river.
-B): weathering by waves.
-C): erosion of rock debris.
-D): a buildup of cooled lava.","A plateau is most likely formed by the accumulation of sediment from a river.
+A): gone
+B): breaking
+C): falling
+D): moving upwards","Every evening a child can look into the night sky and see that the moon is moving downwards.
 Options
-A): runoff from a river.
-B): weathering by waves.
-C): erosion of rock debris.
-D): a buildup of cooled lava.",3,1,arc-challenge_input_train_data.xlsx,LLaMA-3-3B,2,"1||A plateau is most likely formed by
+A): gone
+B): breaking
+C): falling
+D): moving upwards",3,1,openbook_input_train_data.xlsx,LLaMA-3,2,"1||Every evening a child can look into the night sky and see that the moon is
 Options
-A): runoff from a river.
-B): weathering by waves.
-C): erosion of rock debris.
-D): a buildup of cooled lava."
+A): gone
+B): breaking
+C): falling
+D): moving upwards"
