@@ -9,14 +9,25 @@ correlation (plus accuracy, macro-F1, MAE): overall, per domain and per source f
 Test pairs whose original text (group) also occurs in the training data are flagged, and
 metrics are also reported without them, since they are not fully unseen.
 
+It then goes through every Excel file in annotation_data (--excel-dir), every sheet, and
+predicts the strength of every text pair that has both texts (CoT files: "Full original CoT"
+-> "Full edited CoT"; input files: "Question" -> "Edited Question"), including rows without
+a human score. The prediction is written to a column "mlp" (--excel-column): reused if it
+already exists (old values are cleared first), otherwise added after the last column. Files
+are saved in place, like the "gemini" column of prompt_perturbation_strength.py; use
+--excel-out-dir to write copies instead, or --no-excel to skip this step. Close the files in
+Excel first. In a git clone, `git checkout -- annotation_data` restores the originals.
+
 Example
     python train_cv_mlp.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --hidden 32 \
         --swap-aug --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_minilm
     python evaluate_mlp.py --model-path results/mlp_minilm/final_model.joblib
 
-Outputs (default: <model dir>/test/): test_predictions.csv, test_metrics.json.
+Outputs (default: <model dir>/test/): test_predictions.csv, test_metrics.json,
+excel_predictions.csv (every Excel row predicted), and the "mlp" column in the Excel files.
 """
 import argparse
+import glob
 import json
 from pathlib import Path
 
@@ -24,11 +35,13 @@ import joblib
 import numpy as np
 import pandas as pd
 import torch
+from openpyxl import load_workbook
 from sklearn.metrics import confusion_matrix
 
 import train_cv_mlp
 from train_cv_mlp import (DOMAIN_NAMES, METRICS, MLP, NUM_LABELS, compute_metrics, embed_pairs,
                           get_device, load_data, pair_features)
+from xlsx_to_csv import COLUMNS, load_domain
 
 BASE_DIR = Path(__file__).parent
 
@@ -57,6 +70,79 @@ def predict_proba(bundle, X, device):
         return torch.softmax(model(torch.tensor(X, device=device)), dim=-1).cpu().numpy()
 
 
+def predict(df, bundle, train_args, device):
+    """Predicted strength (0-3) and class probabilities for every pair in df."""
+    U, V = embed_pairs(df, train_args, device)
+    X = bundle["preprocessor"].transform(pair_features(U, V), df["domain"].values)
+    probs = predict_proba(bundle, X, device)
+    return probs.argmax(-1), probs
+
+
+# ----------------------------------------------------------------------------
+# Excel: predict every text pair in every sheet, write a prediction column
+# ----------------------------------------------------------------------------
+EXCEL_PATTERNS = {0: "*_cot_*.xlsx", 1: "*_input_*.xlsx"}  # domain -> file pattern
+
+
+def read_excel_pairs(excel_dir):
+    """All text pairs in all sheets (scored or not), with file path, sheet and Excel row."""
+    frames = []
+    for dom, pattern in EXCEL_PATTERNS.items():
+        files = sorted(glob.glob(str(Path(excel_dir) / pattern)))
+        if files:
+            d = load_domain(files, COLUMNS[dom]["col_a"], COLUMNS[dom]["col_b"], dom,
+                            require_score=False)
+            d["path"] = d["source_file"].map({Path(f).name: f for f in files})
+            d["col_a_name"] = COLUMNS[dom]["col_a"]
+            frames.append(d)
+    if not frames:
+        raise SystemExit(f"No *_cot_*.xlsx or *_input_*.xlsx files found in {excel_dir}")
+    df = pd.concat(frames, ignore_index=True)
+    is_text = lambda s: s.notna() & (s.astype(str).str.strip() != "")
+    df = df[is_text(df["text_a"]) & is_text(df["text_b"])].copy()
+    # same text normalisation as xlsx_to_csv.clean_train, so predictions match test.csv
+    df["text_a"] = df["text_a"].astype(str).str.strip()
+    df["text_b"] = df["text_b"].astype(str).str.strip()
+    return df.reset_index(drop=True)
+
+
+def find_column(ws, name):
+    """1-based index of the header cell equal to `name` (case/space-insensitive), or None."""
+    for cell in ws[1]:
+        if cell.value is not None and str(cell.value).strip().lower() == name.strip().lower():
+            return cell.column
+    return None
+
+
+def write_excel_predictions(df, column, out_dir=None):
+    """Write df["pred"] into `column` of each sheet at each pair's Excel row."""
+    written = {}
+    for path, file_rows in df.groupby("path"):
+        wb = load_workbook(path)
+        for sheet, rows in file_rows.groupby("sheet"):
+            ws = wb[sheet]
+            a_col = find_column(ws, rows["col_a_name"].iloc[0])
+            # safety check: the Excel row must hold the text that was predicted
+            for r, text in zip(rows["row"], rows["text_a"]):
+                cell = ws.cell(row=int(r), column=a_col).value
+                if str(cell).strip() != text:
+                    raise SystemExit(f"{Path(path).name} [{sheet}] row {r}: text does not match "
+                                     "the row read by pandas; nothing was written to this file.")
+            col = find_column(ws, column)
+            if col is None:
+                col = ws.max_column + 1
+                ws.cell(row=1, column=col, value=column)
+            for r in range(2, ws.max_row + 1):  # clear predictions from an earlier run
+                ws.cell(row=r, column=col).value = None
+            for r, pred in zip(rows["row"], rows["pred"]):
+                ws.cell(row=int(r), column=col, value=int(pred))
+            written[(Path(path).name, sheet)] = len(rows)
+        target = Path(out_dir) / Path(path).name if out_dir else Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        wb.save(target)
+    return written
+
+
 def fmt(m):
     return " | ".join(f"{k} {m[k]:.3f}" for k in METRICS)
 
@@ -70,6 +156,12 @@ def main():
                         "(default: the files the model was trained on)")
     p.add_argument("--cache-dir", default=None, help="embedding cache (default: as in training)")
     p.add_argument("--output-dir", default=None, help="default: <model dir>/test")
+    p.add_argument("--excel-dir", default=str(BASE_DIR / "annotation_data"),
+                   help="folder with the *_cot_*.xlsx / *_input_*.xlsx files to add predictions to")
+    p.add_argument("--excel-column", default="mlp", help="name of the prediction column")
+    p.add_argument("--excel-out-dir", default=None,
+                   help="save the updated Excel files here instead of overwriting them")
+    p.add_argument("--no-excel", action="store_true", help="skip writing predictions to Excel")
     args = p.parse_args()
 
     bundle = load_bundle(args.model_path)
@@ -92,10 +184,7 @@ def main():
     print(f"Test: {len(df)} pairs | {int(df['seen_original'].sum())} share an original text "
           f"with the training data")
 
-    U, V = embed_pairs(df, train_args, device)
-    X = bundle["preprocessor"].transform(pair_features(U, V), df["domain"].values)
-    probs = predict_proba(bundle, X, device)
-    df["pred"] = probs.argmax(-1)
+    df["pred"], probs = predict(df, bundle, train_args, device)
     for c in range(NUM_LABELS):
         df[f"p{c}"] = probs[:, c]
 
@@ -133,6 +222,21 @@ def main():
     df.to_csv(out / "test_predictions.csv", index=False)
     (out / "test_metrics.json").write_text(json.dumps(results, indent=2))
     print(f"\nWrote {out / 'test_predictions.csv'} and {out / 'test_metrics.json'}")
+
+    if not args.no_excel:
+        xl = read_excel_pairs(args.excel_dir)
+        print(f"\nExcel: predicting {len(xl)} text pairs in {xl['path'].nunique()} files "
+              f"({int(xl['label'].notna().sum())} have a human score)")
+        xl["pred"], xl_probs = predict(xl, bundle, train_args, device)
+        for c in range(NUM_LABELS):
+            xl[f"p{c}"] = xl_probs[:, c]
+        written = write_excel_predictions(xl, args.excel_column, args.excel_out_dir)
+        for (f, sheet), n in written.items():
+            print(f"  {f:36s} [{sheet}] {n} predictions")
+        where = args.excel_out_dir or args.excel_dir
+        print(f"Wrote column '{args.excel_column}' to the Excel files in {where}")
+        xl.drop(columns=["path", "col_a_name"]).to_csv(out / "excel_predictions.csv", index=False)
+        print(f"Wrote {out / 'excel_predictions.csv'}")
 
 
 if __name__ == "__main__":
