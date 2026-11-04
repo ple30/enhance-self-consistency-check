@@ -24,3 +24,11 @@ python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 4
 python train_cv_mlp.py --classifier logreg --seeds 42 43 44 45 46   # logistic-regression baseline
 python train_cv_mlp.py --features u,v,diff,prod,cos --pca 32 --swap-aug
 ```
+
+### Evaluating on the test set
+`evaluate_mlp.py` loads a final model from `train_cv_mlp.py --final-fit` (MLP or logistic regression), embeds the pairs in `annotation_data/test.csv` with the same embedding model and features, and reports linear-weighted kappa and Pearson correlation (plus accuracy, macro-F1, MAE) overall, per domain and per source file, with a confusion matrix. Test pairs whose original text also appears in the training data are flagged, and metrics are also reported without them.
+
+```bash
+python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_mpnet
+python evaluate_mlp.py --model-path results/mlp_mpnet/final_model.joblib
+```
