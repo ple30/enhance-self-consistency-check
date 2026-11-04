@@ -27,8 +27,8 @@ import torch
 from sklearn.metrics import confusion_matrix
 
 import train_cv_mlp
-from train_cv import METRICS, NUM_LABELS, DOMAIN_NAMES, compute_metrics, get_device, load_data
-from train_cv_mlp import MLP, embed_pairs, logreg_proba, pair_features
+from train_cv_mlp import (DOMAIN_NAMES, METRICS, MLP, NUM_LABELS, compute_metrics, embed_pairs,
+                          get_device, load_data, logreg_proba, pair_features)
 
 BASE_DIR = Path(__file__).parent
 

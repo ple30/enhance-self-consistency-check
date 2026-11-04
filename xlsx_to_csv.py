@@ -4,7 +4,7 @@ Prepare text-pair data for fine-tuning the cross-encoder.
 Train and test Excel files live in separate folders. This script prepares the
 TRAIN data: one CSV (classifier_train_data/train.csv) with columns text_a, text_b,
 domain (0 (CoT) / 1 (Question)), perturbation strength label (0-3), source_file, sheet,
-row, group. There is no separate validation file: train_cv.py makes cross-validation
+row, group. There is no separate validation file: train_cv_mlp.py makes cross-validation
 folds from this data, grouped by `group`.
 """
 import glob
@@ -119,7 +119,7 @@ def clean_train(df):
 
 
 def add_swapped(df):
-    """Swap augmentation: add (B, A) copies. Apply to training data only (used by train_cv.py)."""
+    """Swap augmentation: add (B, A) copies. Apply to training data only."""
     swapped = df.copy()
     swapped["text_a"], swapped["text_b"] = df["text_b"].values, df["text_a"].values
     return pd.concat([df, swapped], ignore_index=True).sample(frac=1, random_state=SEED).reset_index(drop=True)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     print(f"\ntrain={len(train_all)} pairs")
 
     # Save all labelled pairs, original direction only. Validation folds are made by
-    # train_cv.py, and swap augmentation (train_cv.py --swap-aug) is applied to the
+    # train_cv_mlp.py, and swap augmentation (train_cv_mlp.py --swap-aug) is applied to the
     # training folds at training time.
     train_all.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
 
