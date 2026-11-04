@@ -14,8 +14,14 @@ The default "diff,prod,cos" is symmetric in (text_a, text_b) and keeps the input
 which matters with ~60 labelled pairs. Adding "u,v" gives the classic [u, v, |u-v|, u*v]
 input; only then does --swap-aug (also train on (v, u)) change anything.
 
---hidden sets the MLP layer sizes; --hidden 0 gives a linear softmax classifier
-(multinomial logistic regression), a useful baseline.
+--hidden sets the MLP layer sizes; --hidden 0 gives a linear softmax layer trained by
+gradient descent with early stopping (close to, but not exactly, logistic regression).
+
+--classifier logreg instead fits scikit-learn's multinomial LogisticRegression (L2 penalty,
+solved to convergence) on the same features. Its inverse regularisation strength C is chosen
+separately in every outer training fold by an inner grouped CV (--inner-folds, --C-grid),
+with preprocessing refitted inside each inner fold, so the outer validation fold is never
+used for any choice. There are no epochs: the reported "epoch" is always 1.
 
 Preprocessing is fitted on the training fold only: features are standardised and, with
 --pca N, the embedding block is reduced to N components.
@@ -27,7 +33,7 @@ reported per fold, out-of-fold, and per domain. Results can be compared directly
 
 Example
     python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit
-    python train_cv_mlp.py --hidden 0                           # logistic-regression baseline
+    python train_cv_mlp.py --classifier logreg --seeds 42 43 44 45 46   # logistic regression
     python train_cv_mlp.py --features u,v,diff,prod,cos --pca 32 --swap-aug
 
 Requirements: torch, sentence-transformers, scikit-learn, pandas.
@@ -37,15 +43,19 @@ import hashlib
 import json
 from pathlib import Path
 
+import warnings
+
 import joblib
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
 from sklearn.decomposition import PCA
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-from train_cv import (METRICS, NUM_DOMAINS, NUM_LABELS, class_weights,
+from train_cv import (HIGHER_IS_BETTER, METRICS, NUM_DOMAINS, NUM_LABELS, class_weights,
                       compute_metrics, get_device, load_data, make_folds, set_seed, summarise)
 
 BASE_DIR = Path(__file__).parent
@@ -198,6 +208,54 @@ def train_mlp(args, X_tr, y_tr, device, seed, X_ev=None, on_epoch_end=None):
 
 
 # ----------------------------------------------------------------------------
+# Logistic regression (scikit-learn), C chosen by inner grouped CV
+# ----------------------------------------------------------------------------
+def train_labels(labels, idx, args):
+    """Labels for training rows, repeated to match swap augmentation."""
+    return np.concatenate([labels[idx]] * (2 if args.swap_aug else 1))
+
+
+def fit_logreg(X, y, C, args, seed):
+    clf = LogisticRegression(C=C, max_iter=args.max_iter, random_state=seed,
+                             class_weight="balanced" if args.class_weights else None)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        return clf.fit(X, y)
+
+
+def logreg_proba(clf, X):
+    """Class probabilities as an (n, NUM_LABELS) array, even if a class was absent in training."""
+    probs = np.zeros((len(X), NUM_LABELS))
+    probs[:, clf.classes_] = clf.predict_proba(X)
+    return probs
+
+
+def choose_C(df, U, V, idx, args, seed):
+    """Pick C by inner grouped CV on rows `idx` (pooled inner out-of-fold predictions).
+
+    Preprocessing is refitted inside each inner fold. Ties go to the smaller C
+    (stronger regularisation). Returns (best C, {C: score}).
+    """
+    domain, labels = df["domain"].values, df["label"].values
+    sub = df.iloc[idx]
+    preds = {C: np.empty(len(idx), dtype=int) for C in args.C_grid}
+    for _, in_tr, in_va in make_folds(sub, args.inner_folds, seed):
+        tr, va = idx[in_tr], idx[in_va]
+        X_tr, X_va, _ = fold_features(U, V, domain, tr, va, args, seed)
+        y_tr = train_labels(labels, tr, args)
+        for C in args.C_grid:
+            preds[C][in_va] = logreg_proba(fit_logreg(X_tr, y_tr, C, args, seed), X_va).argmax(-1)
+    worst = -np.inf if HIGHER_IS_BETTER[args.select_metric] else np.inf
+    scores = {}
+    for C in args.C_grid:
+        s = compute_metrics(labels[idx], preds[C])[args.select_metric]
+        scores[C] = worst if np.isnan(s) else s
+    sign = 1 if HIGHER_IS_BETTER[args.select_metric] else -1
+    best = max(sorted(args.C_grid), key=lambda C: sign * scores[C])  # first max = smallest C
+    return best, scores
+
+
+# ----------------------------------------------------------------------------
 # Cross-validation
 # ----------------------------------------------------------------------------
 def run_cv(args, df, U, V, device):
@@ -206,23 +264,33 @@ def run_cv(args, df, U, V, device):
     for seed in args.seeds:
         for fold, tr_idx, va_idx in make_folds(df, args.folds, seed):
             X_tr, X_va, _ = fold_features(U, V, domain, tr_idx, va_idx, args, seed)
-            y_tr = np.concatenate([labels[tr_idx]] * (2 if args.swap_aug else 1))
+            y_tr = train_labels(labels, tr_idx, args)
             y_va = labels[va_idx]
+            extra = {}
 
             def on_epoch_end(epoch, loss, probs):
                 preds = probs.argmax(-1)
                 epoch_rows.append({"seed": seed, "fold": fold, "epoch": epoch, "train_loss": loss,
-                                   **compute_metrics(y_va, preds)})
+                                   **extra, **compute_metrics(y_va, preds)})
                 for i, idx in enumerate(va_idx):
                     pred_rows.append({"seed": seed, "fold": fold, "epoch": epoch,
                                       "row_id": int(df.index[idx]), "domain": int(domain[idx]),
                                       "label": int(y_va[i]), "pred": int(preds[i]),
                                       **{f"p{c}": float(probs[i, c]) for c in range(NUM_LABELS)}})
 
-            train_mlp(args, X_tr, y_tr, device, seed, X_ev=X_va, on_epoch_end=on_epoch_end)
+            if args.classifier == "logreg":
+                C, _ = choose_C(df, U, V, tr_idx, args, seed)
+                clf = fit_logreg(X_tr, y_tr, C, args, seed)
+                p_tr = logreg_proba(clf, X_tr)
+                train_loss = float(-np.log(np.clip(p_tr[np.arange(len(y_tr)), y_tr], 1e-12, 1)).mean())
+                extra["C"] = C
+                on_epoch_end(1, train_loss, logreg_proba(clf, X_va))
+            else:
+                train_mlp(args, X_tr, y_tr, device, seed, X_ev=X_va, on_epoch_end=on_epoch_end)
             last = epoch_rows[-1]
             print(f"seed {seed} fold {fold}: train {len(tr_idx)} / val {len(va_idx)} | "
-                  f"input dim {X_tr.shape[1]} | final epoch: "
+                  f"input dim {X_tr.shape[1]}"
+                  + (f" | C {extra['C']:g}" if "C" in extra else " | final epoch") + ": "
                   + " ".join(f"{k} {last[k]:.3f}" for k in METRICS))
     return pd.DataFrame(epoch_rows), pd.DataFrame(pred_rows)
 
@@ -246,6 +314,13 @@ def parse_args():
     p.add_argument("--no-domain", action="store_true", help="do not append the domain one-hot")
     p.add_argument("--pca", type=int, default=0,
                    help="reduce the embedding block to N components (0 = off)")
+    p.add_argument("--classifier", choices=["mlp", "logreg"], default="mlp",
+                   help="mlp: PyTorch MLP; logreg: scikit-learn LogisticRegression with C tuned "
+                        "by inner grouped CV")
+    p.add_argument("--C-grid", type=float, nargs="+", default=list(np.logspace(-4, 2, 13)),
+                   help="logreg: candidate inverse regularisation strengths")
+    p.add_argument("--inner-folds", type=int, default=4, help="logreg: inner CV folds for C")
+    p.add_argument("--max-iter", type=int, default=5000, help="logreg: solver iterations")
     p.add_argument("--hidden", type=int, nargs="+", default=[64],
                    help="hidden layer sizes; 0 = linear classifier (logistic regression)")
     p.add_argument("--dropout", type=float, default=0.3)
@@ -273,6 +348,9 @@ def parse_args():
     if unknown or not args.features:
         p.error(f"--features must be a non-empty subset of {FEATURE_KINDS}; got {args.features}")
     args.hidden = [h for h in args.hidden if h > 0]
+    if args.classifier == "logreg":
+        args.epochs = 1  # no epochs; summarise() treats the single fit as epoch 1
+        args.C_grid = sorted(float(c) for c in args.C_grid)
     if args.swap_aug and not {"u", "v"} & set(args.features):
         print("NOTE: --swap-aug has no effect with symmetric features only (diff, prod, cos)")
     return args
@@ -282,8 +360,9 @@ def main():
     args = parse_args()
     if args.output_dir is None:
         hid = "x".join(map(str, args.hidden)) or "linear"
+        clf_name = "logreg" if args.classifier == "logreg" else f"mlp_h{hid}"
         args.output_dir = str(BASE_DIR / "results" / (
-            f"mlp_{Path(args.embedding_model).name}_{'-'.join(args.features)}_h{hid}"
+            f"{clf_name}_{Path(args.embedding_model).name}_{'-'.join(args.features)}"
             + ("_nodomain" if args.no_domain else "") + (f"_pca{args.pca}" if args.pca else "")))
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -292,14 +371,31 @@ def main():
     df = load_data(args.data)
     print(f"Device: {device} | {len(df)} rows, {df['group'].nunique()} groups")
     U, V = embed_pairs(df, args, device)
-    print(f"Embedding dim {U.shape[1]} | features {args.features} | hidden {args.hidden or 'linear'}\n")
+    model_desc = ("logreg (C by inner CV)" if args.classifier == "logreg"
+                  else f"MLP hidden {args.hidden or 'linear'}")
+    print(f"Embedding dim {U.shape[1]} | features {args.features} | {model_desc}\n")
 
     epochs_df, preds_df = run_cv(args, df, U, V, device)
     epochs_df.to_csv(out / "epoch_metrics.csv", index=False)
     preds_df.to_csv(out / "oof_predictions.csv", index=False)
     summary = summarise(args, epochs_df, preds_df, print_every=args.print_every)
+    if args.classifier == "logreg":
+        counts = epochs_df["C"].value_counts().sort_index()
+        summary["chosen_C_counts"] = {f"{c:g}": int(n) for c, n in counts.items()}
+        print("Chosen C per outer fold: "
+              + ", ".join(f"{c:g} x{n}" for c, n in counts.items()))
 
-    if args.final_fit:
+    if args.final_fit and args.classifier == "logreg":
+        all_idx = np.arange(len(df))
+        C, scores = choose_C(df, U, V, all_idx, args, args.seeds[0])
+        print(f"\nFinal fit on all {len(df)} rows with C={C:g} (chosen by inner CV on all data) ...")
+        X, _, pre = fold_features(U, V, df["domain"].values, all_idx, None, args, args.seeds[0])
+        clf = fit_logreg(X, train_labels(df["label"].values, all_idx, args), C, args, args.seeds[0])
+        joblib.dump({"classifier": clf, "preprocessor": pre, "C": C, "args": vars(args)},
+                    out / "final_model.joblib")
+        summary.update(final_model=str(out / "final_model.joblib"), final_C=C)
+        print(f"Saved final model to {out / 'final_model.joblib'}")
+    elif args.final_fit:
         final_args = argparse.Namespace(**{**vars(args), "epochs": summary["selected_epoch"]})
         print(f"\nFinal fit on all {len(df)} rows for {final_args.epochs} epochs ...")
         all_idx = np.arange(len(df))
@@ -318,4 +414,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Run through the importable module so saved models reference train_cv_mlp.Preprocessor
+    # (not __main__.Preprocessor) and can be loaded with joblib from other scripts/notebooks.
+    import train_cv_mlp
+    train_cv_mlp.main()
