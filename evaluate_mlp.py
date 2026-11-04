@@ -1,7 +1,7 @@
 """
 Evaluate a final model from train_cv_mlp.py (--final-fit) on held-out test data.
 
-Loads final_model.joblib (MLP or logistic regression, with its fitted preprocessing),
+Loads final_model.joblib (the MLP with its fitted preprocessing),
 embeds the test pairs with the same frozen sentence-transformer and settings used in
 training, predicts perturbation strength 0-3, and reports linear-weighted kappa and Pearson
 correlation (plus accuracy, macro-F1, MAE): overall, per domain and per source file.
@@ -10,9 +10,9 @@ Test pairs whose original text (group) also occurs in the training data are flag
 metrics are also reported without them, since they are not fully unseen.
 
 Example
-    python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit \
-        --output-dir results/mlp_mpnet
-    python evaluate_mlp.py --model-path results/mlp_mpnet/final_model.joblib
+    python train_cv_mlp.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --hidden 32 \
+        --swap-aug --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_minilm
+    python evaluate_mlp.py --model-path results/mlp_minilm/final_model.joblib
 
 Outputs (default: <model dir>/test/): test_predictions.csv, test_metrics.json.
 """
@@ -28,7 +28,7 @@ from sklearn.metrics import confusion_matrix
 
 import train_cv_mlp
 from train_cv_mlp import (DOMAIN_NAMES, METRICS, MLP, NUM_LABELS, compute_metrics, embed_pairs,
-                          get_device, load_data, logreg_proba, pair_features)
+                          get_device, load_data, pair_features)
 
 BASE_DIR = Path(__file__).parent
 
@@ -38,12 +38,17 @@ def load_bundle(path):
     import __main__
     if not hasattr(__main__, "Preprocessor"):
         __main__.Preprocessor = train_cv_mlp.Preprocessor
-    return joblib.load(path)
+    bundle = joblib.load(path)
+    # Models from earlier versions (logistic regression, or features other than [u, v]) are
+    # not compatible with the current preprocessing.
+    features = bundle["args"].get("features", ["u", "v"])
+    if "classifier" in bundle or list(features) != ["u", "v"]:
+        raise SystemExit(f"{path} was trained by an earlier version of train_cv_mlp.py "
+                         f"(features {features}); retrain it with the current version.")
+    return bundle
 
 
 def predict_proba(bundle, X, device):
-    if "classifier" in bundle:  # logistic regression
-        return logreg_proba(bundle["classifier"], X)
     a = bundle["args"]
     model = MLP(bundle["in_dim"], a["hidden"], a["dropout"], a["input_dropout"]).to(device)
     model.load_state_dict(bundle["state_dict"])
@@ -75,8 +80,8 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     device = get_device()
 
-    kind = "logreg" if "classifier" in bundle else f"MLP hidden {train_args.hidden or 'linear'}"
-    print(f"Model: {kind} | embeddings {train_args.embedding_model} | features {train_args.features}")
+    print(f"Model: MLP hidden {train_args.hidden or 'none (linear)'} | input [u, v] + domain | "
+          f"embeddings {train_args.embedding_model}")
 
     df = load_data(args.test_data)
     train_files = args.train_data or [f for f in train_args.data if Path(f).exists()]
@@ -88,8 +93,7 @@ def main():
           f"with the training data")
 
     U, V = embed_pairs(df, train_args, device)
-    emb, scal = pair_features(U, V, train_args.features)
-    X = bundle["preprocessor"].transform(emb, scal, df["domain"].values)
+    X = bundle["preprocessor"].transform(pair_features(U, V), df["domain"].values)
     probs = predict_proba(bundle, X, device)
     df["pred"] = probs.argmax(-1)
     for c in range(NUM_LABELS):

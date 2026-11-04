@@ -7,19 +7,17 @@ Explanations using Perturbation Strength. [Preprint](https://doi.org/10.48550/ar
 - The annotated data can be found in [annotation_data](https://github.com/ple30/enhance-self-consistency-check/tree/main/annotation_data)
 
 ### MLP on frozen sentence embeddings (cross-validated)
-`train_cv_mlp.py` embeds every text once with a frozen sentence-transformer (cached in `results/emb_cache/`), builds pair features (`|u−v|`, `u⊙v`, cosine by default; optionally `u`, `v`) plus a domain one-hot, and trains a small MLP. It reads all labelled pairs from `classifier_train_data/train.csv` and runs grouped, stratified k-fold CV (pairs with the same original text never straddle folds; a given seed always gives the same folds), reporting linear-weighted kappa (primary), Pearson correlation, accuracy, macro-F1 and MAE, overall and per domain. `--classifier logreg` replaces the MLP with scikit-learn's logistic regression, with its regularisation strength `C` chosen in each training fold by an inner grouped CV.
+`train_cv_mlp.py` embeds every text once with a frozen sentence-transformer (cached in `results/emb_cache/`). Each pair is represented as `[u, v]`, the embeddings of the original and the perturbed text, plus a domain one-hot (CoT vs. Question), and a small MLP predicts the perturbation strength (0 = no/minimal change ... 3 = strong change). Because the input depends on the order of the two texts, `--swap-aug` (also train on the reversed pair) is worth trying. It reads all labelled pairs from `classifier_train_data/train.csv` and runs grouped, stratified k-fold CV (pairs with the same original text never straddle folds; a given seed always gives the same folds), reporting linear-weighted kappa (primary), Pearson correlation, accuracy, macro-F1 and MAE, overall and per domain.
 
 ```bash
 pip install torch sentence-transformers scikit-learn pandas
-python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit
-python train_cv_mlp.py --classifier logreg --seeds 42 43 44 45 46   # logistic-regression baseline
-python train_cv_mlp.py --features u,v,diff,prod,cos --pca 32 --swap-aug
+python train_cv_mlp.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --hidden 32 --swap-aug --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_minilm
+python train_cv_mlp.py --pca 32 --hidden 16 --seeds 42 43 44 45 46   # reduce [u, v] to 32 components first
 ```
 
 ### Evaluating on the test set
-`evaluate_mlp.py` loads a final model from `train_cv_mlp.py --final-fit` (MLP or logistic regression), embeds the pairs in `annotation_data/test.csv` with the same embedding model and features, and reports linear-weighted kappa and Pearson correlation (plus accuracy, macro-F1, MAE) overall, per domain and per source file, with a confusion matrix. Test pairs whose original text also appears in the training data are flagged, and metrics are also reported without them.
+`evaluate_mlp.py` loads a final model from `train_cv_mlp.py --final-fit`, embeds the pairs in `annotation_data/test.csv` with the same embedding model, and reports linear-weighted kappa and Pearson correlation (plus accuracy, macro-F1, MAE) overall, per domain and per source file, with a confusion matrix. Test pairs whose original text also appears in the training data are flagged, and metrics are also reported without them.
 
 ```bash
-python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_mpnet
-python evaluate_mlp.py --model-path results/mlp_mpnet/final_model.joblib
+python evaluate_mlp.py --model-path results/mlp_minilm/final_model.joblib
 ```
