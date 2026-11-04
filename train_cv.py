@@ -15,8 +15,8 @@ selectable with --domain-mode:
 
 Cross-validation
     * train.csv and val.csv are pooled (the fixed val split is too small to be useful).
-      Swap copies already in train.csv are dropped so each pair is evaluated once, in its
-      original direction; --swap-aug re-adds swaps to the training folds only.
+      Each pair is evaluated once, in its original direction (any swap copies left in an
+      older train.csv are dropped); --swap-aug adds swaps to the training folds only.
     * Folds come from StratifiedGroupKFold: rows sharing the same original text
       (`group`) never straddle train/validation, and folds are stratified on
       label x domain.
@@ -116,8 +116,9 @@ def load_data(paths):
 def drop_swapped(df):
     """Keep one row per unordered (text_a, text_b, domain) pair, in the original direction.
 
-    xlsx_to_csv.py writes train.csv with (text_b, text_a) swap copies already added. Left in,
-    they would count each pair twice in validation and be swapped again by --swap-aug.
+    xlsx_to_csv.py now saves original-direction pairs only, so this is normally a no-op. It
+    guards against CSVs from older versions that had (text_b, text_a) swap copies included:
+    left in, they would count each pair twice in validation and be swapped again by --swap-aug.
     The original direction is the row whose text_a is the group's original text.
     """
     df = df.copy()

@@ -131,7 +131,7 @@ def split_train_val(df, val_frac=0.1, seed=SEED):
 
 
 def add_swapped(df):
-    """Swap augmentation: add (B, A) copies. Apply to the TRAIN set only."""
+    """Swap augmentation: add (B, A) copies. Apply to training data only (used by train_cv.py)."""
     swapped = df.copy()
     swapped["text_a"], swapped["text_b"] = df["text_b"].values, df["text_a"].values
     return pd.concat([df, swapped], ignore_index=True).sample(frac=1, random_state=SEED).reset_index(drop=True)
@@ -147,12 +147,9 @@ if __name__ == "__main__":
     print(pd.crosstab(train_all["domain"], train_all["label"]))
 
     train, val = split_train_val(train_all, val_frac=0.1)
-    train_aug = add_swapped(train)
-    print(f"\ntrain={len(train)} (augmented: {len(train_aug)}), val={len(val)}")
+    print(f"\ntrain={len(train)}, val={len(val)}")
 
-    train_aug.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
+    # Save original-direction pairs only. Swap augmentation is applied at training time
+    # (train_cv.py --swap-aug) so it only ever touches the training folds.
+    train.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
     val.to_csv(base_dir / "classifier_train_data/val.csv", index=False)
-
-    # Plug directly into the PairDataset
-    # PairDataset(train_aug.text_a.tolist(), train_aug.text_b.tolist(),
-    #             train_aug.domain.tolist(), train_aug.label.tolist())
