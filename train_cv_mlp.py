@@ -13,6 +13,11 @@ the same label) is worth trying: it doubles the training rows of each fold.
 --hidden sets the MLP layer sizes (e.g. --hidden 32, or --hidden 64 32 for two layers);
 --hidden 0 gives a linear softmax layer with no hidden layer.
 
+Question texts (domain 1) are cut before the word "Options", so only the question itself is
+embedded (the answer options are identical in the original and the perturbed question). Pass
+--keep-options to embed the full text. The setting is saved with the model and evaluate_mlp.py
+applies the same rule.
+
 Preprocessing is fitted on the training fold only: [u, v] is standardised and, with --pca N,
 reduced to N components; the domain one-hot is appended afterwards (--no-domain drops it).
 
@@ -39,6 +44,7 @@ import argparse
 import hashlib
 import json
 import random
+import re
 from pathlib import Path
 
 import joblib
@@ -129,6 +135,30 @@ def drop_swapped(df):
         print(f"Dropped {n0 - len(df)} swapped duplicate rows ({n0} -> {len(df)} unique pairs); "
               "use --swap-aug to add swaps to the training folds only")
     return df.drop(columns=["_key", "_orig"])
+
+
+OPTIONS_RE = re.compile(r"\bOptions\b")
+
+
+def cut_options(text):
+    """Question text before the word "Options" (unchanged if it does not contain it)."""
+    return OPTIONS_RE.split(text, maxsplit=1)[0].strip()
+
+
+def prepare_texts(df, keep_options=False):
+    """Copy of df with the texts that are embedded: Question texts cut before "Options".
+
+    Groups are left as they are (cutting creates no new duplicates in this data).
+    """
+    df = df.copy()
+    if not keep_options:
+        q = df["domain"] == 1
+        n = int((df.loc[q, "text_a"].str.contains(OPTIONS_RE) |
+                 df.loc[q, "text_b"].str.contains(OPTIONS_RE)).sum())
+        for col in ("text_a", "text_b"):
+            df.loc[q, col] = df.loc[q, col].map(cut_options)
+        print(f"Question texts cut before 'Options' in {n}/{int(q.sum())} Question pairs")
+    return df
 
 
 def class_weights(labels, device):
@@ -381,6 +411,8 @@ def parse_args():
     p.add_argument("--max-seq-length", type=int, default=None,
                    help="override the embedding model's max tokens (longer texts are truncated)")
     p.add_argument("--normalize", action="store_true", help="L2-normalise embeddings")
+    p.add_argument("--keep-options", action="store_true",
+                   help="embed full Question texts, including the answer options")
     p.add_argument("--embed-batch-size", type=int, default=32)
     p.add_argument("--cache-dir", default=str(BASE_DIR / "results" / "emb_cache"))
     p.add_argument("--no-domain", action="store_true", help="do not append the domain one-hot")
@@ -424,7 +456,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     device = get_device()
 
-    df = load_data(args.data)
+    df = prepare_texts(load_data(args.data), args.keep_options)
     print(f"Device: {device} | {len(df)} rows, {df['group'].nunique()} groups")
     U, V = embed_pairs(df, args, device)
     print(f"Embedding dim {U.shape[1]} | input [u, v] + domain | "

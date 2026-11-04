@@ -5,7 +5,9 @@ Reads every Excel file in annotation_data (--excel-dir) and every sheet, and pre
 perturbation strength (0-3) of every text pair that has both texts (CoT files: "Full
 original CoT" -> "Full edited CoT"; input files: "Question" -> "Edited Question"), using
 the model and its fitted preprocessing from final_model.joblib and the same frozen
-sentence-transformer and settings as in training.
+sentence-transformer and settings as in training. Question texts are cut before "Options"
+exactly as in training (models trained with --keep-options, or by versions before this
+option existed, embed the full text). The Excel files and output CSVs keep the full texts.
 
 Metrics are computed on the pairs that have a human score, after the same cleaning as the
 training data (xlsx_to_csv.clean_train: whole-number scores 0-3, duplicates dropped,
@@ -43,7 +45,7 @@ from sklearn.metrics import confusion_matrix
 
 import train_cv_mlp
 from train_cv_mlp import (DOMAIN_NAMES, METRICS, MLP, NUM_LABELS, compute_metrics, embed_pairs,
-                          drop_swapped, get_device, load_data, pair_features)
+                          drop_swapped, get_device, load_data, pair_features, prepare_texts)
 from xlsx_to_csv import COLUMNS, clean_train, load_domain
 
 BASE_DIR = Path(__file__).parent
@@ -182,12 +184,15 @@ def main():
     device = get_device()
 
     print(f"Model: MLP hidden {train_args.hidden or 'none (linear)'} | input [u, v] + domain | "
-          f"embeddings {train_args.embedding_model}")
+          f"embeddings {train_args.embedding_model} | Question texts "
+          + ("in full" if getattr(train_args, "keep_options", True) else "cut before 'Options'"))
 
     xl = read_excel_pairs(args.excel_dir)
     print(f"Excel: {len(xl)} text pairs in {xl['path'].nunique()} files "
           f"({int(xl['label'].notna().sum())} have a human score)")
-    xl["pred"], xl_probs = predict(xl, bundle, train_args, device)
+    # models saved before the option existed were trained on full Question texts
+    keep_options = getattr(train_args, "keep_options", True)
+    xl["pred"], xl_probs = predict(prepare_texts(xl, keep_options), bundle, train_args, device)
     for c in range(NUM_LABELS):
         xl[f"p{c}"] = xl_probs[:, c]
 
