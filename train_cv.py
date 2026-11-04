@@ -266,14 +266,24 @@ def fit(args, train_df, device, seed, eval_df=None, on_epoch_end=None):
 # ----------------------------------------------------------------------------
 # Cross-validation
 # ----------------------------------------------------------------------------
+def make_folds(df, n_splits, seed):
+    """Yield (fold, train_idx, val_idx): grouped by `group`, stratified on label x domain.
+
+    Shared with train_cv_mlp.py so both scripts evaluate on identical folds for a given seed.
+    """
+    strata = df["label"].astype(str) + "_" + df["domain"].astype(str)
+    skf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    for fold, (tr_idx, va_idx) in enumerate(skf.split(df, strata, groups=df["group"])):
+        assert not set(df["group"].iloc[tr_idx]) & set(df["group"].iloc[va_idx]), \
+            "group leakage between folds"
+        yield fold, tr_idx, va_idx
+
+
 def run_cv(args, df, device):
     epoch_rows, pred_rows = [], []
-    strata = df["label"].astype(str) + "_" + df["domain"].astype(str)
     for seed in args.seeds:
-        skf = StratifiedGroupKFold(n_splits=args.folds, shuffle=True, random_state=seed)
-        for fold, (tr_idx, va_idx) in enumerate(skf.split(df, strata, groups=df["group"])):
+        for fold, tr_idx, va_idx in make_folds(df, args.folds, seed):
             tr, va = df.iloc[tr_idx], df.iloc[va_idx]
-            assert not set(tr["group"]) & set(va["group"]), "group leakage between folds"
             t0 = time.time()
 
             def on_epoch_end(epoch, loss, probs):
@@ -315,10 +325,12 @@ def pooled_metrics(preds, epoch):
     return out
 
 
-def summarise(args, epochs_df, preds_df):
+def summarise(args, epochs_df, preds_df, print_every=1):
     curve = epochs_df.groupby("epoch")[METRICS + ["train_loss"]].agg(["mean", "std"])
+    shown = curve.xs("mean", axis=1, level=1)
+    shown = shown[(shown.index % print_every == 0) | (shown.index == shown.index.min())]
     print("\nFold-averaged validation curve (mean over seeds x folds):")
-    print(curve.xs("mean", axis=1, level=1).round(4).to_string())
+    print(shown.round(4).to_string())
 
     sel = curve[(args.select_metric, "mean")]
     if sel.isna().all():
