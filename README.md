@@ -7,7 +7,7 @@ Explanations using Perturbation Strength. [Preprint](https://doi.org/10.48550/ar
 - The annotated data can be found in [annotation_data](https://github.com/ple30/enhance-self-consistency-check/tree/main/annotation_data)
 
 ### Perturbation-strength classifier (cross-validated fine-tuning)
-`train_cv.py` fine-tunes a cross-encoder that predicts the perturbation strength (0 = no/minimal change ... 3 = strong change) of a `(text_a, text_b)` pair, using the domain (CoT vs. Question) as an extra input (`--domain-mode both|embed|prefix|none`). It pools `classifier_train_data/train.csv` and `val.csv` and runs grouped, stratified k-fold CV (rows with the same original text never straddle folds).
+`train_cv.py` fine-tunes a cross-encoder that predicts the perturbation strength (0 = no/minimal change ... 3 = strong change) of a `(text_a, text_b)` pair, using the domain (CoT vs. Question) as an extra input (`--domain-mode both|embed|prefix|none`). It reads all labelled pairs from `classifier_train_data/train.csv` (there is no separate validation file) and runs grouped, stratified k-fold CV (rows with the same original text never straddle folds).
 
 ```bash
 pip install torch transformers sentencepiece scikit-learn pandas openpyxl
