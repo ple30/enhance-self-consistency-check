@@ -15,6 +15,8 @@ selectable with --domain-mode:
 
 Cross-validation
     * train.csv and val.csv are pooled (the fixed val split is too small to be useful).
+      Each pair is evaluated once, in its original direction (any swap copies left in an
+      older train.csv are dropped); --swap-aug adds swaps to the training folds only.
     * Folds come from StratifiedGroupKFold: rows sharing the same original text
       (`group`) never straddle train/validation, and folds are stratified on
       label x domain.
@@ -108,7 +110,27 @@ def load_data(paths):
     bad = ~df["label"].between(0, NUM_LABELS - 1) | ~df["domain"].between(0, NUM_DOMAINS - 1)
     if bad.any():
         raise ValueError(f"{bad.sum()} rows have out-of-range label/domain")
-    return df.reset_index(drop=True)
+    return drop_swapped(df).reset_index(drop=True)
+
+
+def drop_swapped(df):
+    """Keep one row per unordered (text_a, text_b, domain) pair, in the original direction.
+
+    xlsx_to_csv.py now saves original-direction pairs only, so this is normally a no-op. It
+    guards against CSVs from older versions that had (text_b, text_a) swap copies included:
+    left in, they would count each pair twice in validation and be swapped again by --swap-aug.
+    The original direction is the row whose text_a is the group's original text.
+    """
+    df = df.copy()
+    df["_key"] = [(d, *sorted((a, b))) for d, a, b in zip(df["domain"], df["text_a"], df["text_b"])]
+    df["_orig"] = df["group"] == df["domain"].astype(str) + "||" + df["text_a"]
+    df = df.sort_values("_orig", ascending=False, kind="stable")
+    n0 = len(df)
+    df = df.drop_duplicates("_key", keep="first").sort_index()
+    if len(df) < n0:
+        print(f"Dropped {n0 - len(df)} swapped duplicate rows ({n0} -> {len(df)} unique pairs); "
+              "use --swap-aug to add swaps to the training folds only")
+    return df.drop(columns=["_key", "_orig"])
 
 
 class Collator:
