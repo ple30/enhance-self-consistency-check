@@ -1,11 +1,8 @@
 """
-Prepare text-pair data for fine-tuning the cross-encoder.
-
-Train and test Excel files live in separate folders. This script prepares the
-TRAIN data: one CSV (classifier_train_data/train.csv) with columns text_a, text_b,
+Prepare train.csv file from Excel files of data for training a classifier to predict perturbation strength.
+The output of running this script is one .csv file (classifier_train_data/train.csv) with columns text_a, text_b,
 domain (0 (CoT) / 1 (Question)), perturbation strength label (0-3), source_file, sheet,
-row, group. There is no separate validation file: train_cv_mlp.py makes cross-validation
-folds from this data, grouped by `group`.
+row, group.
 """
 import glob
 import os
@@ -16,17 +13,13 @@ from pathlib import Path
 base_dir = Path(__file__).parent
 
 COLUMNS = {
-    0: {"col_a": "Full original CoT", "col_b": "Full edited CoT"},  # domain 1
-    1: {"col_a": "Question", "col_b": "Edited Question"},           # domain 2
+    0: {"col_a": "Full original CoT", "col_b": "Full edited CoT"},  # domain 0 (for CoT perturbations)
+    1: {"col_a": "Question", "col_b": "Edited Question"},           # domain 1 (for Input perturbations)
 }
 FILES = {
     "train": {
         0: sorted(glob.glob(str(base_dir / "classifier_train_data/cot/*.xlsx"))),
         1: sorted(glob.glob(str(base_dir / "classifier_train_data/input/*.xlsx"))),
-    },
-    "test": {
-        0: sorted(glob.glob(str(base_dir / "annotation_data/*_cot_*.xlsx"))),
-        1: sorted(glob.glob(str(base_dir / "annotation_data/*_input_*.xlsx"))),
     },
 }
 SCORE_COL = "score"
@@ -112,8 +105,7 @@ def clean_train(df):
         df = df.drop_duplicates(subset=["text_a", "text_b", "domain"], keep="first")
 
     print(f"clean_train(): {n0} -> {len(df)} rows")
-    # rows sharing the same original text (within a domain) must stay in the same
-    # split, otherwise the same original appears in train and validation (leakage)
+
     df["group"] = df["domain"].astype(str) + "||" + df["text_a"]
     return df.reset_index(drop=True)
 
@@ -130,18 +122,7 @@ def add_swapped(df):
 # ----------------------------------------------------------------------------
 if __name__ == "__main__":
     train_all = clean_train(load_split("train"))
-
     print("\nTrain label distribution per domain:")
     print(pd.crosstab(train_all["domain"], train_all["label"]))
-
     print(f"\ntrain={len(train_all)} pairs")
-
-    # Save all labelled pairs, original direction only. Validation folds are made by
-    # train_cv_mlp.py, and swap augmentation (train_cv_mlp.py --swap-aug) is applied to the
-    # training folds at training time.
     train_all.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
-
-    test_all = clean_train(load_split("test"))
-    
-      
-    test_all.to_csv(base_dir / "annotation_data/test.csv", index=False)
