@@ -26,10 +26,17 @@ used for any choice. There are no epochs: the reported "epoch" is always 1.
 Preprocessing is fitted on the training fold only: features are standardised and, with
 --pca N, the embedding block is reduced to N components.
 
-Cross-validation is identical to train_cv.py: same data loading, same folds for a given
-seed (grouped, stratified on label x domain), the number of epochs chosen from the
-fold-averaged curve, and the same metrics (linear kappa, Pearson, accuracy, macro-F1, MAE)
-reported per fold, out-of-fold, and per domain. Results can be compared directly.
+Cross-validation
+    * All labelled pairs come from train.csv; each pair is used once, in its original
+      direction (swap copies left in an older train.csv are dropped).
+    * Folds come from StratifiedGroupKFold: rows sharing the same original text (`group`)
+      never straddle train/validation, and folds are stratified on label x domain. A given
+      seed always gives the same folds, so runs with the same --seeds are comparable.
+    * The MLP is trained for a fixed number of epochs and evaluated after each one; the
+      number of epochs is chosen from the fold-averaged curve (slightly optimistic, so
+      final-epoch metrics are reported too). --seeds repeats the CV with other splits.
+    * Metrics: linear-weighted kappa (primary), Pearson, accuracy, macro-F1, MAE; per fold,
+      out-of-fold, and per domain.
 
 Example
     python train_cv_mlp.py --embedding-model all-mpnet-base-v2 --seeds 42 43 44 45 46 --final-fit
@@ -41,6 +48,7 @@ Requirements: torch, sentence-transformers, scikit-learn, pandas.
 import argparse
 import hashlib
 import json
+import random
 from pathlib import Path
 
 import warnings
@@ -53,14 +61,168 @@ import torch.nn as nn
 from sklearn.decomposition import PCA
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, mean_absolute_error
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.preprocessing import StandardScaler
-
-from train_cv import (HIGHER_IS_BETTER, METRICS, NUM_DOMAINS, NUM_LABELS, class_weights,
-                      compute_metrics, get_device, load_data, make_folds, set_seed, summarise)
 
 BASE_DIR = Path(__file__).parent
 FEATURE_KINDS = ["u", "v", "diff", "prod", "cos"]
 EMB_KINDS = ["u", "v", "diff", "prod"]  # vector-valued features (PCA applies to these)
+
+
+# ----------------------------------------------------------------------------
+# Shared setup: constants, data loading, folds, metrics, summary
+# ----------------------------------------------------------------------------
+NUM_LABELS = 4
+NUM_DOMAINS = 2
+DOMAIN_NAMES = {0: "CoT", 1: "Question"}
+METRICS = ["linear_kappa", "pearson", "accuracy", "macro_f1", "mae"]
+HIGHER_IS_BETTER = {"linear_kappa": True, "pearson": True, "accuracy": True, "macro_f1": True,
+                    "mae": False}
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def get_device():
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
+def compute_metrics(y_true, y_pred):
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    # kappa is undefined when only one class is present in both arrays
+    kappa = (cohen_kappa_score(y_true, y_pred, weights="linear", labels=list(range(NUM_LABELS)))
+             if len(set(y_true) | set(y_pred)) > 1 else float("nan"))
+    # Pearson r is undefined when either side is constant (e.g. the model predicts one class)
+    pearson = (float(np.corrcoef(y_true, y_pred)[0, 1])
+               if y_true.std() > 0 and y_pred.std() > 0 else float("nan"))
+    return {
+        "linear_kappa": kappa,
+        "pearson": pearson,
+        "accuracy": accuracy_score(y_true, y_pred),
+        "macro_f1": f1_score(y_true, y_pred, average="macro", labels=list(range(NUM_LABELS)),
+                             zero_division=0),
+        "mae": mean_absolute_error(y_true, y_pred),
+    }
+
+
+def load_data(paths):
+    df = pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
+    df = df.dropna(subset=["text_a", "text_b", "label", "domain"])
+    df["label"] = df["label"].astype(int)
+    df["domain"] = df["domain"].astype(int)
+    if "group" not in df.columns:
+        df["group"] = df["domain"].astype(str) + "||" + df["text_a"]
+    bad = ~df["label"].between(0, NUM_LABELS - 1) | ~df["domain"].between(0, NUM_DOMAINS - 1)
+    if bad.any():
+        raise ValueError(f"{bad.sum()} rows have out-of-range label/domain")
+    return drop_swapped(df).reset_index(drop=True)
+
+
+def drop_swapped(df):
+    """Keep one row per unordered (text_a, text_b, domain) pair, in the original direction.
+
+    xlsx_to_csv.py now saves original-direction pairs only, so this is normally a no-op. It
+    guards against CSVs from older versions that had (text_b, text_a) swap copies included:
+    left in, they would count each pair twice in validation and be swapped again by --swap-aug.
+    The original direction is the row whose text_a is the group's original text.
+    """
+    df = df.copy()
+    df["_key"] = [(d, *sorted((a, b))) for d, a, b in zip(df["domain"], df["text_a"], df["text_b"])]
+    df["_orig"] = df["group"] == df["domain"].astype(str) + "||" + df["text_a"]
+    df = df.sort_values("_orig", ascending=False, kind="stable")
+    n0 = len(df)
+    df = df.drop_duplicates("_key", keep="first").sort_index()
+    if len(df) < n0:
+        print(f"Dropped {n0 - len(df)} swapped duplicate rows ({n0} -> {len(df)} unique pairs); "
+              "use --swap-aug to add swaps to the training folds only")
+    return df.drop(columns=["_key", "_orig"])
+
+
+def class_weights(labels, device):
+    counts = np.bincount(labels, minlength=NUM_LABELS).astype(float)
+    w = counts.sum() / (NUM_LABELS * np.maximum(counts, 1))
+    return torch.tensor(w, dtype=torch.float, device=device)
+
+
+def make_folds(df, n_splits, seed):
+    """Yield (fold, train_idx, val_idx): grouped by `group`, stratified on label x domain.
+
+    """
+    strata = df["label"].astype(str) + "_" + df["domain"].astype(str)
+    skf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    for fold, (tr_idx, va_idx) in enumerate(skf.split(df, strata, groups=df["group"])):
+        assert not set(df["group"].iloc[tr_idx]) & set(df["group"].iloc[va_idx]), \
+            "group leakage between folds"
+        yield fold, tr_idx, va_idx
+
+
+
+def pooled_metrics(preds, epoch):
+    """Out-of-fold metrics at one epoch: pool all folds per seed, then mean/std over seeds."""
+    sub = preds[preds["epoch"] == epoch]
+    per_seed = {"all": [], **{DOMAIN_NAMES[d]: [] for d in range(NUM_DOMAINS)}}
+    for _, s in sub.groupby("seed"):
+        per_seed["all"].append(compute_metrics(s["label"], s["pred"]))
+        for d in range(NUM_DOMAINS):
+            sd = s[s["domain"] == d]
+            if len(sd):
+                per_seed[DOMAIN_NAMES[d]].append(compute_metrics(sd["label"], sd["pred"]))
+    out = {}
+    for name, rows in per_seed.items():
+        if rows:
+            r = pd.DataFrame(rows)
+            out[name] = {k: {"mean": float(r[k].mean()), "std": float(r[k].std(ddof=0))}
+                         for k in METRICS}
+    return out
+
+
+def summarise(args, epochs_df, preds_df, print_every=1):
+    curve = epochs_df.groupby("epoch")[METRICS + ["train_loss"]].agg(["mean", "std"])
+    shown = curve.xs("mean", axis=1, level=1)
+    shown = shown[(shown.index % print_every == 0) | (shown.index == shown.index.min())]
+    print("\nFold-averaged validation curve (mean over seeds x folds):")
+    print(shown.round(4).to_string())
+
+    sel = curve[(args.select_metric, "mean")]
+    if sel.isna().all():
+        print(f"WARNING: {args.select_metric} is undefined at every epoch; using the final epoch")
+        sel = pd.Series(0.0, index=sel.index).where(sel.index != args.epochs, 1.0)
+    else:
+        sel = sel.fillna(-np.inf if HIGHER_IS_BETTER[args.select_metric] else np.inf)
+    best_epoch = int(sel.idxmax() if HIGHER_IS_BETTER[args.select_metric] else sel.idxmin())
+    summary = {
+        "selected_epoch": best_epoch,
+        "select_metric": args.select_metric,
+        "fold_mean_at_selected_epoch": {
+            k: {"mean": float(curve.loc[best_epoch, (k, "mean")]),
+                "std": float(curve.loc[best_epoch, (k, "std")])} for k in METRICS},
+        "oof_at_selected_epoch": pooled_metrics(preds_df, best_epoch),
+        "oof_at_final_epoch": pooled_metrics(preds_df, args.epochs),
+        "args": vars(args),
+    }
+
+    def fmt(block):
+        return " | ".join(f"{k} {v['mean']:.3f}±{v['std']:.3f}" for k, v in block.items())
+
+    print(f"\nSelected epoch ({args.select_metric}): {best_epoch}")
+    print(f"Per-fold mean±std @ epoch {best_epoch}: {fmt(summary['fold_mean_at_selected_epoch'])}")
+    for title, key, ep in [("selected", "oof_at_selected_epoch", best_epoch),
+                           ("final", "oof_at_final_epoch", args.epochs)]:
+        print(f"Out-of-fold @ {title} epoch {ep} (mean±std over seeds):")
+        for name, block in summary[key].items():
+            print(f"  {name:9s} {fmt(block)}")
+    return summary
+
+
 
 
 # ----------------------------------------------------------------------------

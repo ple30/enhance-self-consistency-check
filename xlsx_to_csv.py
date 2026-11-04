@@ -111,7 +111,7 @@ def clean_train(df):
 
 
 def add_swapped(df):
-    """Swap augmentation: add (B, A) copies. Apply to training data only (used by train_cv.py)."""
+    """Swap augmentation: add (B, A) copies. Apply to training data only."""
     swapped = df.copy()
     swapped["text_a"], swapped["text_b"] = df["text_b"].values, df["text_a"].values
     return pd.concat([df, swapped], ignore_index=True).sample(frac=1, random_state=SEED).reset_index(drop=True)
