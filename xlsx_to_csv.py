@@ -2,14 +2,15 @@
 Prepare text-pair data for fine-tuning the cross-encoder.
 
 Train and test Excel files live in separate folders. This script prepares the
-TRAIN data (train/val DataFrames with columns text_a, text_b, domain (0 (CoT) / 1 (Question)),
-perturbation strength label (0-3), source_file, sheet, row, group). 
+TRAIN data: one CSV (classifier_train_data/train.csv) with columns text_a, text_b,
+domain (0 (CoT) / 1 (Question)), perturbation strength label (0-3), source_file, sheet,
+row, group. There is no separate validation file: train_cv.py makes cross-validation
+folds from this data, grouped by `group`.
 """
 import glob
 import os
 
 import pandas as pd
-from sklearn.model_selection import GroupShuffleSplit
 from pathlib import Path
 
 base_dir = Path(__file__).parent
@@ -117,19 +118,6 @@ def clean_train(df):
     return df.reset_index(drop=True)
 
 
-# ----------------------------------------------------------------------------
-# Train / validation split (grouped, per domain)
-# ----------------------------------------------------------------------------
-def split_train_val(df, val_frac=0.1, seed=SEED):
-    train, val = [], []
-    for _, d in df.groupby("domain"):
-        gss = GroupShuffleSplit(n_splits=1, test_size=val_frac, random_state=seed)
-        i_tr, i_va = next(gss.split(d, groups=d["group"]))
-        train.append(d.iloc[i_tr]), val.append(d.iloc[i_va])
-    shuffle = lambda xs: pd.concat(xs).sample(frac=1, random_state=seed).reset_index(drop=True)
-    return shuffle(train), shuffle(val)
-
-
 def add_swapped(df):
     """Swap augmentation: add (B, A) copies. Apply to training data only (used by train_cv.py)."""
     swapped = df.copy()
@@ -146,10 +134,9 @@ if __name__ == "__main__":
     print("\nTrain label distribution per domain:")
     print(pd.crosstab(train_all["domain"], train_all["label"]))
 
-    train, val = split_train_val(train_all, val_frac=0.1)
-    print(f"\ntrain={len(train)}, val={len(val)}")
+    print(f"\ntrain={len(train_all)} pairs")
 
-    # Save original-direction pairs only. Swap augmentation is applied at training time
-    # (train_cv.py --swap-aug) so it only ever touches the training folds.
-    train.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
-    val.to_csv(base_dir / "classifier_train_data/val.csv", index=False)
+    # Save all labelled pairs, original direction only. Validation folds are made by
+    # train_cv.py, and swap augmentation (train_cv.py --swap-aug) is applied to the
+    # training folds at training time.
+    train_all.to_csv(base_dir / "classifier_train_data/train.csv", index=False)

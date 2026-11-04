@@ -14,7 +14,7 @@ selectable with --domain-mode:
     none   : ignore domain (ablation)
 
 Cross-validation
-    * train.csv and val.csv are pooled (the fixed val split is too small to be useful).
+    * All labelled pairs come from one file, train.csv (no separate validation file).
       Each pair is evaluated once, in its original direction (any swap copies left in an
       older train.csv are dropped); --swap-aug adds swaps to the training folds only.
     * Folds come from StratifiedGroupKFold: rows sharing the same original text
@@ -356,9 +356,8 @@ def summarise(args, epochs_df, preds_df):
 # ----------------------------------------------------------------------------
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--data", nargs="+", default=[str(BASE_DIR / "classifier_train_data/train.csv"),
-                                                 str(BASE_DIR / "classifier_train_data/val.csv")],
-                   help="CSV files to pool for CV (columns: text_a, text_b, label, domain, group)")
+    p.add_argument("--data", nargs="+", default=[str(BASE_DIR / "classifier_train_data/train.csv")],
+                   help="CSV file(s) with all labelled pairs (several are pooled) for CV (columns: text_a, text_b, label, domain, group)")
     p.add_argument("--model", default="microsoft/deberta-v3-small",
                    help="Hugging Face model name or local path")
     p.add_argument("--output-dir", default=None, help="default: results/cv_<model>_<domain-mode>")
