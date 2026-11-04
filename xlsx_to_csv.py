@@ -25,8 +25,8 @@ FILES = {
         1: sorted(glob.glob(str(base_dir / "classifier_train_data/input/*.xlsx"))),
     },
     "test": {
-        0: sorted(glob.glob("data/test/domain1/*.xlsx")),
-        1: sorted(glob.glob("data/test/domain2/*.xlsx")),
+        0: sorted(glob.glob(str(base_dir / "annotation_data/*_cot_*.xlsx"))),
+        1: sorted(glob.glob(str(base_dir / "annotation_data/*_input_*.xlsx"))),
     },
 }
 SCORE_COL = "score"
@@ -140,3 +140,8 @@ if __name__ == "__main__":
     # train_cv.py, and swap augmentation (train_cv.py --swap-aug) is applied to the
     # training folds at training time.
     train_all.to_csv(base_dir / "classifier_train_data/train.csv", index=False)
+
+    test_all = clean_train(load_split("test"))
+    
+      
+    test_all.to_csv(base_dir / "annotation_data/test.csv", index=False)
