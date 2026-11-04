@@ -16,9 +16,9 @@ python train_cv_mlp.py --pca 32 --hidden 16 --seeds 42 43 44 45 46   # reduce [u
 ```
 
 ### Evaluating on the test set
-`evaluate_mlp.py` loads a final model from `train_cv_mlp.py --final-fit`, embeds the pairs in `annotation_data/test.csv` with the same embedding model, and reports linear-weighted kappa and Pearson correlation (plus accuracy, macro-F1, MAE) overall, per domain and per source file, with a confusion matrix. Test pairs whose original text also appears in the training data are flagged, and metrics are also reported without them.
+`evaluate_mlp.py` loads a final model from `train_cv_mlp.py --final-fit` and reads the annotation Excel files in `annotation_data` directly (every file, every sheet). It predicts every text pair with the same embedding model, including pairs without a human score, and computes linear-weighted kappa and Pearson correlation (plus accuracy, macro-F1, MAE) on the scored pairs, after the same cleaning as the training data: overall, per domain and per source file, with a confusion matrix. Scored pairs whose original text also appears in the training data are flagged, and metrics are also reported without them.
 
-It then predicts every text pair in every sheet of the Excel files in `annotation_data` (including rows without a human score) and writes the prediction to a column `mlp` (reused if it exists, otherwise added after the last column). Files are saved in place; use `--excel-out-dir DIR` to write copies instead, `--excel-column NAME` for another column name, or `--no-excel` to skip this step.
+The predictions are written to a column `mlp` in the Excel files (reused if it exists, otherwise added after the last column). Files are saved in place; use `--excel-out-dir DIR` to write copies instead, `--excel-column NAME` for another column name, or `--no-write` to only compute metrics.
 
 ```bash
 python evaluate_mlp.py --model-path results/mlp_minilm/final_model.joblib
