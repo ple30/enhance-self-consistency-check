@@ -402,8 +402,10 @@ def run_cv(args, df, U, V, device):
 # ----------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------
-def parse_args():
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+def build_parser(description=__doc__):
+    """Argument parser with all embedding / MLP / CV options (reused by learning_curve_mlp.py)."""
+    p = argparse.ArgumentParser(description=description,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data", nargs="+", default=[str(BASE_DIR / "classifier_train_data/train.csv")],
                    help="CSV file(s) with all labelled pairs (several are pooled) for CV")
     p.add_argument("--embedding-model", default="all-MiniLM-L6-v2",
@@ -438,8 +440,11 @@ def parse_args():
     p.add_argument("--final-fit", action="store_true",
                    help="retrain on all data for the selected epochs and save the model")
     p.add_argument("--output-dir", default=None)
-    args = p.parse_args()
+    return p
 
+
+def parse_args():
+    args = build_parser().parse_args()
     args.hidden = [h for h in args.hidden if h > 0]
     return args
 

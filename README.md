@@ -15,6 +15,15 @@ python train_cv_mlp.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 
 python train_cv_mlp.py --pca 32 --hidden 16 --seeds 42 43 44 45 46   # reduce [u, v] to 32 components first
 ```
 
+### Learning curve for the MLP
+`learning_curve_mlp.py` shows how the MLP's validation performance changes with the number of training pairs. In every CV split (the same folds as `train_cv_mlp.py` for the same `--seeds`), the training fold is subsampled to each fraction in `--train-sizes`, and the MLP is trained on that subset and evaluated on the full, fixed validation fold. Subsets are nested, stratified on label x domain and keep groups together; `--repeats` draws several subsets per fold. The MLP trains for a fixed `--epochs` with no epoch selection on the validation folds (`--eval-epochs 50 100 200` adds one curve per epoch), and training-set scores are plotted alongside, so the gap between the two shows overfitting. All MLP options of `train_cv_mlp.py` are available.
+
+```bash
+pip install matplotlib
+python learning_curve_mlp.py --hidden 32 --swap-aug --epochs 100 --seeds 42 43 44 45 46 --repeats 3 --train-sizes 0.2 0.4 0.6 0.8 1.0 --output-dir results/lc_mlp_h32
+python learning_curve_mlp.py --plot-only --per-domain --output-dir results/lc_mlp_h32   # redraw from the saved CSV
+```
+
 ### Ordinal logistic regression on frozen sentence embeddings (nested CV)
 `train_cv_ordinal.py` is the linear, ordinal counterpart of the MLP: a proportional-odds (cumulative-logit) logistic regression with an L2 penalty, which respects the order 0 < 1 < 2 < 3 and has one weight per feature. It uses the same embeddings (and cache), Question-text cutting, folds and metrics as `train_cv_mlp.py`, so results with the same `--seeds` are directly comparable. By default a pair is represented by the symmetric features `[|u - v|, u * v]` plus `cos(u, v)` and a domain indicator; `--pair-mode` also offers `diff`, `prod`, `concat` (`[u, v]`, as in the MLP), `full`, and `none` (with the cosine: a cosine-only baseline). `--pca N` reduces the embedding features first (fitted per fold).
 
