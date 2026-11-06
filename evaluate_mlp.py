@@ -1,5 +1,6 @@
 """
-Evaluate a final model from train_cv_mlp.py (--final-fit) on the annotation Excel files.
+Evaluate a final model from train_cv_mlp.py or train_cv_ordinal.py (--final-fit) on the
+annotation Excel files.
 
 Reads every Excel file in annotation_data (--excel-dir) and every sheet, and predicts the
 perturbation strength (0-3) of every text pair that has both texts (CoT files: "Full
@@ -16,7 +17,8 @@ accuracy, macro-F1, MAE), overall, per domain and per source file, with a confus
 Scored pairs whose original text (group) also occurs in the training data are flagged, and
 metrics are also reported without them, since they are not fully unseen.
 
-Every predicted pair, scored or not, is then written to a column "mlp" (--excel-column):
+Every predicted pair, scored or not, is then written to a column "mlp" for MLP models and
+"ordinal" for ordinal-regression models (--excel-column sets another name):
 reused if it already exists (old values are cleared first), otherwise added after the last
 column. Files are saved in place, like the "gemini" column of prompt_perturbation_strength.py;
 use --excel-out-dir to write copies instead, or --no-write to only compute metrics. Close the
@@ -26,10 +28,12 @@ Example
     python train_cv_mlp.py --embedding-model sentence-transformers/all-MiniLM-L6-v2 --hidden 32 \
         --swap-aug --seeds 42 43 44 45 46 --final-fit --output-dir results/mlp_minilm
     python evaluate_mlp.py --model-path results/mlp_minilm/final_model.joblib
+    python train_cv_ordinal.py --seeds 42 43 44 45 46 --final-fit --output-dir results/ordinal
+    python evaluate_mlp.py --model-path results/ordinal/final_model.joblib
 
 Outputs (default: <model dir>/test/): test_predictions.csv (scored pairs used for the
 metrics), test_metrics.json, excel_predictions.csv (every pair predicted), and the "mlp"
-column in the Excel files.
+(or "ordinal") column in the Excel files.
 """
 import argparse
 import glob
@@ -57,6 +61,8 @@ def load_bundle(path):
     if not hasattr(__main__, "Preprocessor"):
         __main__.Preprocessor = train_cv_mlp.Preprocessor
     bundle = joblib.load(path)
+    if bundle.get("model_type") == "ordinal":  # from train_cv_ordinal.py
+        return bundle
     # Models from earlier versions (logistic regression, or features other than [u, v]) are
     # not compatible with the current preprocessing.
     features = bundle["args"].get("features", ["u", "v"])
@@ -78,6 +84,11 @@ def predict_proba(bundle, X, device):
 def predict(df, bundle, train_args, device):
     """Predicted strength (0-3) and class probabilities for every pair in df."""
     U, V = embed_pairs(df, train_args, device)
+    if bundle.get("model_type") == "ordinal":
+        U, V = U.astype(np.float64), V.astype(np.float64)
+        X = bundle["preprocessor"].transform(U, V, df["domain"].values)
+        probs = bundle["model"].predict_proba(X)
+        return bundle["model"].decide(probs, train_args.decision), probs
     X = bundle["preprocessor"].transform(pair_features(U, V), df["domain"].values)
     probs = predict_proba(bundle, X, device)
     return probs.argmax(-1), probs
@@ -160,7 +171,8 @@ def fmt(m):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--model-path", required=True, help="final_model.joblib from train_cv_mlp.py --final-fit")
+    p.add_argument("--model-path", required=True,
+                   help="final_model.joblib from train_cv_mlp.py or train_cv_ordinal.py --final-fit")
     p.add_argument("--train-data", nargs="+", default=None,
                    help="training CSV(s), to flag test pairs sharing an original text "
                         "(default: the files the model was trained on)")
@@ -168,7 +180,9 @@ def main():
     p.add_argument("--output-dir", default=None, help="default: <model dir>/test")
     p.add_argument("--excel-dir", default=str(BASE_DIR / "annotation_data"),
                    help="folder with the *_cot_*.xlsx / *_input_*.xlsx annotation files")
-    p.add_argument("--excel-column", default="mlp", help="name of the prediction column")
+    p.add_argument("--excel-column", default=None,
+                   help='name of the prediction column (default: "mlp", or "ordinal" for '
+                        'ordinal-regression models)')
     p.add_argument("--excel-out-dir", default=None,
                    help="save the updated Excel files here instead of overwriting them")
     p.add_argument("--no-write", action="store_true",
@@ -183,7 +197,13 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     device = get_device()
 
-    print(f"Model: MLP hidden {train_args.hidden or 'none (linear)'} | input [u, v] + domain | "
+    ordinal = bundle.get("model_type") == "ordinal"
+    if args.excel_column is None:
+        args.excel_column = "ordinal" if ordinal else "mlp"
+    model_desc = (f"ordinal logistic regression (alpha {bundle['alpha']:g}) | pair mode "
+                  f"{train_args.pair_mode}" if ordinal else
+                  f"MLP hidden {train_args.hidden or 'none (linear)'} | input [u, v] + domain")
+    print(f"Model: {model_desc} | "
           f"embeddings {train_args.embedding_model} | Question texts "
           + ("in full" if getattr(train_args, "keep_options", True) else "cut before 'Options'"))
 
