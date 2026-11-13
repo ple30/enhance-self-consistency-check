@@ -17,7 +17,7 @@ result_dir.mkdir(parents=True, exist_ok=True)
 batch_requests_dir.mkdir(parents=True, exist_ok=True)
 
 # The main folders to iterate through
-main_folders = ['openbook']
+main_folders = ['sports']
 cot_models = ['LLaMA-3-3B', 'LLaMA-3', 'Mistral-2', 'Phi-3']
 for main_folder in main_folders:
     main_path = base_dir / main_folder
@@ -51,8 +51,8 @@ for main_folder in main_folders:
                     entry = json.loads(line)
                     completed.add((entry['question_id'], entry['step_idx']))
 
-        with open(result_file, 'w') as f:
-            for question_id, instances in list(grouped_data.items())[:15]:
+        with open(result_file, 'a') as f:
+            for question_id, instances in list(grouped_data.items())[120:]:
                 first = instances[0]  # All instances share the same question/segmented_cot
 
                 # 1. Question + Options
