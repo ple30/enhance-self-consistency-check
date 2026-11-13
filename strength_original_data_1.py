@@ -1,20 +1,15 @@
 from collections import defaultdict
-import csv
 import os
 from pathlib import Path
 import json
-from random import random
 from google import genai
 from google.genai import types
 from prompt_perturbation_strength import client, perturbation_instruction, create_prompt_cot, extract_rating
-import re
 
 
 base_dir = Path(__file__).parent
 result_dir = base_dir / 'perturbation_strength_result'
-batch_requests_dir = base_dir / 'batch_requests'
 result_dir.mkdir(parents=True, exist_ok=True)
-batch_requests_dir.mkdir(parents=True, exist_ok=True)
 
 # The main folders to iterate through
 main_folders = ['sports']
