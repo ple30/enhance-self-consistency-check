@@ -28,7 +28,7 @@ For the perturbed text provided, give:
 - Rating (0-3)
 - Brief justification"""
 
-with open(Path(__file__).parent / 'examples_for_llm' / 'sqa_input_example_1.txt', "r") as f:
+with open(Path(__file__).parent / 'examples_for_llm' / 'sqa_input_example.txt', "r") as f:
     examples = f.read()
 
 
