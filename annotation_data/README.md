@@ -6,9 +6,9 @@ Files follow the pattern `<dataset>_<cot|input>_annotation.xlsx`.
 
 | Column | Description |
 |---|---|
-| `score` | Perturbation strength score from the primary annotator |
-| `annotator 2 score` | Score from a second annotator, used to check agreement with the primary annotator (only on some rows) |
-| `gemini` | Score from the LLM judge (Gemini) |
+| `score` | Perturbation strength from the primary annotator |
+| `annotator 2 score` | Perturbation strength from the second annotator, used to check agreement with the primary annotator |
+| `gemini` | Perturbation strength from the LLM judge approach, using Gemini |
 | `cosine distance` | Cosine distance between the original and perturbed text |
 | `surprisal` | Change in surprisal between the original and perturbed text |
 | `mlp` | Output of a method that is no longer used; kept for reference |
