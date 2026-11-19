@@ -1,7 +1,10 @@
 # Human-annotated data
 
-1. Clone the [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results) of the parametric-faithfulness repository using ...
 Samples are drawn from the [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results) of the parametric-faithfulness repository. The sampling code will be added later.
+
+## Getting the source data
+
+The `dataset_folders` in [get_files.py](../get_files.py) come from the `arc-challenge`, `sqa`, `openbook` and `sports` folders in [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results).
 
 Files follow the pattern `<dataset>_<cot|input>_annotation.xlsx`.
 
