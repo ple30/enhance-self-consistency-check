@@ -2,6 +2,17 @@
 
 The `dataset_folders` in [get_files.py](../get_files.py) come from the `arc-challenge`, `sqa`, `openbook` and `sports` folders in [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results). Please have these 4 folders ready and saved at the root repository.
 
+Copy these 4 folders directly into the root of this repository (not inside a `minimal_mistake_results/` folder), so the layout looks like this before running any script:
+
+```
+enhance-self-consistency-check/
+├── arc-challenge/
+├── openbook/
+├── sports/
+├── sqa/
+└── get_files.py
+```
+
 # Human-annotated data
 Files follow the pattern `<dataset>_<cot|input>_annotation.xlsx`.
 
