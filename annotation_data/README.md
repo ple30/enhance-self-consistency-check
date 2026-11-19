@@ -1,5 +1,6 @@
 # Human-annotated data
 
+1. Clone the [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results) of the parametric-faithfulness repository using ...
 Samples are drawn from the [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results) of the parametric-faithfulness repository. The sampling code will be added later.
 
 ## Getting the source data
