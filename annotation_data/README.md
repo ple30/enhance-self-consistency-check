@@ -1,9 +1,8 @@
+# Getting the source data
+
+The `dataset_folders` in [get_files.py](../get_files.py) come from the `arc-challenge`, `sqa`, `openbook` and `sports` folders in [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results). Please have these 4 folders ready and saved at the root repository.
+
 # Human-annotated data
-
-## Getting the source data
-
-The `dataset_folders` in [get_files.py](../get_files.py) come from the `arc-challenge`, `sqa`, `openbook` and `sports` folders in [minimal_mistake_results](https://github.com/technion-cs-nlp/parametric-faithfulness/tree/main/minimal_mistake_results).
-
 Files follow the pattern `<dataset>_<cot|input>_annotation.xlsx`.
 
 | Column | Description |
